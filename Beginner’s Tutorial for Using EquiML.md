@@ -36,7 +36,7 @@ In this tutorial, we’ll use EquiML to predict income levels fairly, ensuring o
 Before we use EquiML, we need to set up our computer with the necessary tools. Don’t worry—we’ll walk through each step slowly.
 
 ### Prerequisites
-- **Python**: EquiML is a Python package, so you need Python installed (version 3.6 or higher). Download it from [python.org](https://www.python.org/downloads/) if you don’t have it.
+- **Python**: EquiML is a Python package, so you need Python installed (version 3.8 or higher). Download it from [python.org](https://www.python.org/downloads/) if you don’t have it.
 - **Git**: We’ll use Git to download the EquiML repository. If you don’t have Git, download it from [git-scm.com](https://git-scm.com/).
 - **A Terminal**: You’ll run commands in a terminal (Command Prompt on Windows, Terminal on macOS/Linux).
 - **A Text Editor**: Use something like VS Code, PyCharm, or even Notepad to write Python code.
