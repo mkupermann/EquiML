@@ -6,5 +6,15 @@ seaborn
 streamlit
 pandas
 numpy
+xgboost
+optuna
+skl2onnx
+onnx
+plotly
+statsmodels
+lime
 scipy
 joblib
+pytest
+flake8
+sphinx
