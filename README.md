@@ -21,7 +21,7 @@ EquiML is an open-source Python framework designed to empower developers to crea
 ## Introduction
 EquiML addresses the urgent need for ethical AI by providing a comprehensive toolkit that ensures machine learning models are both powerful and just. Unlike traditional tools that focus on isolated aspects of fairness or explainability, EquiML offers an end-to-end solution—from data preprocessing to model deployment. It is designed for data scientists, developers, and stakeholders aiming to comply with fairness regulations and build trust in AI systems.
 
-The framework is still under development, as noted in its [GitHub repository](https://github.com/mkupermann/EquiML), and welcomes contributions to evolve into a practical toolset for responsible AI.
+The framework is still under development and welcomes contributions to evolve into a practical toolset for responsible AI.
 
 ## Key Features
 EquiML provides a robust set of tools:
