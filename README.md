@@ -2,7 +2,7 @@
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Python](https://img.shields.io/badge/python-3.6%2B-blue)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue)
 
 EquiML is an open-source Python framework designed to empower developers to create machine learning models that are accurate, fair, transparent, and accountable. In a world where AI influences critical decisions—such as hiring, lending, and healthcare—EquiML integrates fairness, explainability, and ethical considerations into every stage of the machine learning lifecycle, making responsible AI accessible to all.
 
@@ -39,7 +39,7 @@ EquiML provides a robust set of tools:
 Follow these steps to set up EquiML on your local machine.
 
 ### Prerequisites
-- **Python 3.6+**: Download from [python.org](https://www.python.org/downloads/).
+- **Python 3.8+**: Download from [python.org](https://www.python.org/downloads/).
 - **Git**: Download from [git-scm.com](https://git-scm.com/downloads).
 - **Virtual Environment** (recommended): Use `venv` or `conda`.
 
