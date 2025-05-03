@@ -103,8 +103,9 @@ We’ll use EquiML with the **Adult Income dataset**, a popular dataset for stud
 
 ### Get the Dataset
 1. Download it from the [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/adult).
-2. You’ll need the file `adult.data`. Rename it to `adult.csv` for simplicity.
-3. Place `adult.csv` in your `EquiML` folder (where you ran the earlier commands).
+2. Or find it here within the Tutorial Dataset folder
+3. You’ll need the file `adult.data`. Rename it to `adult.csv` for simplicity.
+4. Place `adult.csv` in your `EquiML` folder (where you ran the earlier commands).
 
 **Note**: The dataset doesn’t have column headers in the file. When we load it with EquiML, it’ll handle that, but for reference, the columns are:
 - age, workclass, fnlwgt, education, education-num, marital-status, occupation, relationship, race, sex, capital-gain, capital-loss, hours-per-week, native-country, income.
