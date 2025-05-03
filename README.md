@@ -44,7 +44,7 @@ EquiML stands out with its robust set of features:
 Follow these steps to set up EquiML on your local machine.
 
 ### Prerequisites
-- **Python 3.6+**: Download from [python.org](https://www.python.org/downloads/).
+- **Python 3.8+**: Download from [python.org](https://www.python.org/downloads/).
 - **Git**: Download from [git-scm.com](https://git-scm.com/).
 - **Virtual Environment** (optional but recommended): Use `venv` or `conda` to manage dependencies.
 
