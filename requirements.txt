@@ -18,3 +18,8 @@ joblib
 pytest
 flake8
 sphinx
+opencv-python
+nltk
+lightgbm
+docker
+coverage
