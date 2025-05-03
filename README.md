@@ -47,6 +47,45 @@ EquiML provides a robust set of tools:
 - **Robustness and Monitoring**: Tools for data drift detection, noise sensitivity analysis, and performance monitoring.
 - **Deployment Readiness**: Export models to ONNX format for cross-platform compatibility.
 
+## Supported Data Types
+EquiML supports a variety of data types to facilitate equitable and responsible machine learning, including numerical, categorical, text, and image data. Below is an overview of how text and image data are processed:
+Text Data
+Text data is processed through the Data class in data.py. The framework:
+
+Cleans text by converting to lowercase, removing punctuation, and eliminating stopwords using NLTK.
+Transforms text into numerical features using TF-IDF vectorization (limited to 100 features) via scikit-learn's TfidfVectorizer.
+Integrates these features into the dataset for model training.
+
+Example Usage:
+```python
+from equiml import Data
+import pandas as pd
+```
+### Sample dataset with a text column
+```python
+data = pd.DataFrame({'text_col': ['This is a sample text', 'Another text example']})
+equiml_data =  = Data(data, text_features=['text_col'])
+equiml_data.preprocess()
+```
+### Image Data
+Image data is processed by loading images from file paths, resizing them to 32x32 pixels in grayscale, and flattening them into numerical arrays using OpenCV. These arrays are then integrated into the dataset.
+Example Usage:
+
+```python
+from equiml import Data
+import pandas as pd
+```
+
+### Sample dataset with image paths
+```python
+data = pd.DataFrame({'image_col': ['path/to/image1.jpg', 'path/to/image2.jpg']})
+equiml_data = Data(data, image_features=['image_col'])
+equiml_data.preprocess()
+```
+
+For detailed tutorials, see the Examples section.
+
+
 ## Installation
 Follow these steps to set up EquiML on your local machine.
 
