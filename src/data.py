@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, PolynomialFeatures
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, PolynomialFeatures, LabelEncoder
 from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import PCA
@@ -11,9 +11,14 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 import string
 import cv2  # For image data support
+import logging
+from typing import List, Optional, Tuple, Union
 
 nltk.download('punkt')
 nltk.download('stopwords')
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class Data:
     """
@@ -31,7 +36,7 @@ class Data:
         X_train, X_test, y_train, y_test: Training and testing splits.
     """
     
-    def __init__(self, dataset_path=None, sensitive_features=None, text_features=None, image_features=None):
+    def __init__(self, dataset_path: Optional[str] = None, sensitive_features: Optional[List[str]] = None, text_features: Optional[List[str]] = None, image_features: Optional[List[str]] = None):
         """
         Initializes the Data object.
         
@@ -53,21 +58,36 @@ class Data:
         self.y_train = None
         self.y_test = None
 
-    def load_data(self, dataset_path=None):
+    def load_data(self, dataset_path: Optional[str] = None) -> None:
         """
-        Loads the dataset from the specified path.
+        Loads the dataset from the specified path. Supports CSV, JSON, and Excel files.
         
         Args:
             dataset_path (str, optional): Path to the dataset file. If not provided, uses the initialized path.
+        
+        Raises:
+            ValueError: If no dataset path is provided or the file format is unsupported.
         """
         if dataset_path:
             self.dataset_path = dataset_path
-        if self.dataset_path:
-            self.df = pd.read_csv(self.dataset_path)
-        else:
+        if not self.dataset_path:
             raise ValueError("No dataset path provided.")
+        
+        try:
+            if self.dataset_path.endswith('.csv'):
+                self.df = pd.read_csv(self.dataset_path)
+            elif self.dataset_path.endswith('.json'):
+                self.df = pd.read_json(self.dataset_path)
+            elif self.dataset_path.endswith('.xlsx'):
+                self.df = pd.read_excel(self.dataset_path)
+            else:
+                raise ValueError("Unsupported file format. Please use CSV, JSON, or Excel files.")
+            logger.info(f"Data loaded successfully from {self.dataset_path}")
+        except Exception as e:
+            logger.error(f"Failed to load data: {str(e)}")
+            raise
 
-    def preprocess(self, target_column, numerical_features=None, categorical_features=None):
+    def preprocess(self, target_column: str, numerical_features: Optional[List[str]] = None, categorical_features: Optional[List[str]] = None, impute_strategy: str = 'mean', scaling: str = 'standard') -> None:
         """
         Preprocesses the data by handling missing values, encoding categorical variables,
         scaling numerical features, processing text features, and handling image data.
@@ -76,15 +96,23 @@ class Data:
             target_column (str): The name of the target variable column.
             numerical_features (list, optional): List of numerical feature names.
             categorical_features (list, optional): List of categorical feature names.
+            impute_strategy (str): Imputation strategy for numerical features ('mean', 'median', 'constant').
+            scaling (str): Scaling method for numerical features ('standard', 'minmax', 'robust').
+        
+        Raises:
+            ValueError: If data is not loaded or required columns are missing.
         """
-        if not self.df:
+        if self.df is None:
             raise ValueError("No data loaded. Call load_data() first.")
+        if target_column not in self.df.columns:
+            raise ValueError(f"Target column '{target_column}' not found in dataset.")
+        
         self.y = self.df[target_column]
         self.X = self.df.drop(columns=[target_column])
         
         # Handle missing values
         if numerical_features:
-            num_imputer = SimpleImputer(strategy='mean')
+            num_imputer = SimpleImputer(strategy=impute_strategy)
             self.X[numerical_features] = num_imputer.fit_transform(self.X[numerical_features])
         if categorical_features:
             cat_imputer = SimpleImputer(strategy='most_frequent')
@@ -93,17 +121,21 @@ class Data:
         # Process text features
         if self.text_features:
             for feature in self.text_features:
+                if feature not in self.X.columns:
+                    raise ValueError(f"Text feature '{feature}' not found in dataset.")
                 self.X[feature] = self.X[feature].apply(self._clean_text)
                 vectorizer = TfidfVectorizer(max_features=100)
                 text_features = vectorizer.fit_transform(self.X[feature]).toarray()
-                text_df = pd.DataFrame(text_features, columns=[f"{feature}_{i}" for i in range(100)])
+                text_df = pd.DataFrame(text_features, columns=[f"{feature}_{i}" for i in range(100)], index=self.X.index)
                 self.X = pd.concat([self.X.drop(columns=[feature]), text_df], axis=1)
         
         # Process image features (assuming paths to images are provided)
         if self.image_features:
             for feature in self.image_features:
+                if feature not in self.X.columns:
+                    raise ValueError(f"Image feature '{feature}' not found in dataset.")
                 image_data = self._process_images(self.X[feature])
-                image_df = pd.DataFrame(image_data, columns=[f"{feature}_pixel_{i}" for i in range(image_data.shape[1])])
+                image_df = pd.DataFrame(image_data, columns=[f"{feature}_pixel_{i}" for i in range(image_data.shape[1])], index=self.X.index)
                 self.X = pd.concat([self.X.drop(columns=[feature]), image_df], axis=1)
         
         # Encode categorical features
@@ -111,15 +143,24 @@ class Data:
             encoder = OneHotEncoder(drop='first', sparse_output=False)
             encoded_cats = encoder.fit_transform(self.X[categorical_features])
             cat_columns = encoder.get_feature_names_out(categorical_features)
-            self.X = pd.concat([self.X.drop(columns=categorical_features),
-                               pd.DataFrame(encoded_cats, columns=cat_columns)], axis=1)
+            encoded_df = pd.DataFrame(encoded_cats, columns=cat_columns, index=self.X.index)
+            self.X = pd.concat([self.X.drop(columns=categorical_features), encoded_df], axis=1)
         
         # Scale numerical features
         if numerical_features:
-            scaler = StandardScaler()
+            if scaling == 'standard':
+                scaler = StandardScaler()
+            elif scaling == 'minmax':
+                from sklearn.preprocessing import MinMaxScaler
+                scaler = MinMaxScaler()
+            elif scaling == 'robust':
+                from sklearn.preprocessing import RobustScaler
+                scaler = RobustScaler()
+            else:
+                raise ValueError(f"Unsupported scaling method: {scaling}")
             self.X[numerical_features] = scaler.fit_transform(self.X[numerical_features])
 
-    def _clean_text(self, text):
+    def _clean_text(self, text: str) -> str:
         """
         Helper function to clean text data.
         
@@ -129,13 +170,17 @@ class Data:
         Returns:
             str: Cleaned text.
         """
-        text = str(text).lower()
-        text = text.translate(str.maketrans('', '', string.punctuation))
-        tokens = word_tokenize(text)
-        tokens = [word for word in tokens if word not in stopwords.words('english')]
-        return ' '.join(tokens)
+        try:
+            text = str(text).lower()
+            text = text.translate(str.maketrans('', '', string.punctuation))
+            tokens = word_tokenize(text)
+            tokens = [word for word in tokens if word not in stopwords.words('english')]
+            return ' '.join(tokens)
+        except Exception as e:
+            logger.error(f"Text cleaning failed: {str(e)}")
+            return ""
 
-    def _process_images(self, image_paths, target_size=(32, 32)):
+    def _process_images(self, image_paths: pd.Series, target_size: Tuple[int, int] = (32, 32)) -> np.ndarray:
         """
         Helper function to process image data into flattened arrays.
         
@@ -148,15 +193,19 @@ class Data:
         """
         processed_images = []
         for path in image_paths:
-            img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)  # Grayscale for simplicity
-            if img is not None:
-                img_resized = cv2.resize(img, target_size)
-                processed_images.append(img_resized.flatten())
-            else:
+            try:
+                img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)  # Grayscale for simplicity
+                if img is not None:
+                    img_resized = cv2.resize(img, target_size)
+                    processed_images.append(img_resized.flatten())
+                else:
+                    processed_images.append(np.zeros(target_size[0] * target_size[1]))
+            except Exception as e:
+                logger.warning(f"Failed to process image '{path}': {str(e)}")
                 processed_images.append(np.zeros(target_size[0] * target_size[1]))
         return np.array(processed_images)
 
-    def detect_outliers(self, features=None, method='zscore', threshold=3, action='flag'):
+    def detect_outliers(self, features: Optional[List[str]] = None, method: str = 'zscore', threshold: float = 3.0, action: str = 'flag') -> Optional[pd.DataFrame]:
         """
         Detects and optionally handles outliers in the specified features.
         
@@ -168,24 +217,36 @@ class Data:
         
         Returns:
             pd.DataFrame: DataFrame indicating outliers (if action='flag').
+        
+        Raises:
+            ValueError: If features or method are invalid.
         """
+        if self.X is None:
+            raise ValueError("Data not preprocessed. Call preprocess() first.")
         if features is None:
             features = self.X.select_dtypes(include=[np.number]).columns
+        elif not set(features).issubset(self.X.columns):
+            raise ValueError("Some features not found in dataset.")
+        
         outliers = pd.DataFrame(index=self.X.index)
         
         for feature in features:
             if method == 'zscore':
-                z_scores = np.abs(stats.zscore(self.X[feature]))
+                z_scores = np.abs(stats.zscore(self.X[feature], nan_policy='omit'))
                 outliers[feature] = z_scores > threshold
             elif method == 'iqr':
                 Q1 = self.X[feature].quantile(0.25)
                 Q3 = self.X[feature].quantile(0.75)
                 IQR = Q3 - Q1
                 outliers[feature] = (self.X[feature] < (Q1 - 1.5 * IQR)) | (self.X[feature] > (Q3 + 1.5 * IQR))
+            else:
+                raise ValueError(f"Unsupported outlier detection method: {method}")
         
         if action == 'remove':
-            self.X = self.X[~outliers.any(axis=1)]
-            self.y = self.y[~outliers.any(axis=1)]
+            mask = ~outliers.any(axis=1)
+            self.X = self.X[mask]
+            self.y = self.y[mask]
+            logger.info("Outliers removed from dataset.")
         elif action == 'cap':
             for feature in features:
                 if method == 'zscore':
@@ -195,10 +256,13 @@ class Data:
                     Q3 = self.X[feature].quantile(0.75)
                     IQR = Q3 - Q1
                     self.X[feature] = self.X[feature].clip(Q1 - 1.5 * IQR, Q3 + 1.5 * IQR)
+            logger.info("Outliers capped in dataset.")
         elif action == 'flag':
             return outliers
+        else:
+            raise ValueError(f"Unsupported action: {action}")
 
-    def feature_engineering(self, polynomial_degree=2, interaction_only=False, include_log=False):
+    def feature_engineering(self, polynomial_degree: int = 2, interaction_only: bool = False, include_log: bool = False) -> None:
         """
         Performs feature engineering by creating polynomial features, interaction terms, and optional log transformations.
         
@@ -206,48 +270,70 @@ class Data:
             polynomial_degree (int): Degree of polynomial features.
             interaction_only (bool): If True, only interaction features are created.
             include_log (bool): If True, adds log-transformed features for numerical columns.
+        
+        Raises:
+            ValueError: If dataset is not preprocessed or contains invalid data for transformations.
         """
+        if self.X is None:
+            raise ValueError("Data not preprocessed. Call preprocess() first.")
+        
         numerical_cols = self.X.select_dtypes(include=[np.number]).columns
+        if not numerical_cols.any():
+            raise ValueError("No numerical columns found for feature engineering.")
+        
         poly = PolynomialFeatures(degree=polynomial_degree, interaction_only=interaction_only)
         poly_features = poly.fit_transform(self.X[numerical_cols])
         poly_columns = poly.get_feature_names_out(numerical_cols)
         poly_df = pd.DataFrame(poly_features, columns=poly_columns, index=self.X.index)
         
-        # Add log transformations if requested
         if include_log:
             for col in numerical_cols:
-                if (self.X[col] > 0).all():  # Ensure no non-positive values
-                    poly_df[f'log_{col}'] = np.log1p(self.X[col])
+                if (self.X[col] <= 0).any():
+                    logger.warning(f"Skipping log transformation for '{col}' due to non-positive values.")
+                    continue
+                poly_df[f'log_{col}'] = np.log1p(self.X[col])
         
-        # Combine with original non-numerical features
         self.X = pd.concat([self.X.drop(columns=numerical_cols), poly_df], axis=1)
+        logger.info("Feature engineering completed.")
 
-    def split_data(self, test_size=0.2, random_state=42):
+    def split_data(self, test_size: float = 0.2, random_state: int = 42) -> None:
         """
         Splits the data into training and testing sets.
         
         Args:
             test_size (float): Proportion of the dataset to include in the test split.
             random_state (int): Seed for reproducibility.
+        
+        Raises:
+            ValueError: If data is not preprocessed.
         """
         if self.X is None or self.y is None:
             raise ValueError("Data not preprocessed. Call preprocess() first.")
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             self.X, self.y, test_size=test_size, random_state=random_state
         )
+        logger.info("Data split into training and testing sets.")
 
-    def reduce_dimensionality(self, n_components=2, method='pca'):
+    def reduce_dimensionality(self, n_components: int = 2, method: str = 'pca') -> None:
         """
         Reduces dimensionality of the feature set.
         
         Args:
             n_components (int): Number of components to keep.
             method (str): Method to use ('pca' or 'tsne').
+        
+        Raises:
+            ValueError: If method is unsupported or data is not preprocessed.
         """
+        if self.X is None:
+            raise ValueError("Data not preprocessed. Call preprocess() first.")
         if method == 'pca':
             pca = PCA(n_components=n_components)
-            self.X = pd.DataFrame(pca.fit_transform(self.X), columns=[f'PC{i+1}' for i in range(n_components)])
+            self.X = pd.DataFrame(pca.fit_transform(self.X), columns=[f'PC{i+1}' for i in range(n_components)], index=self.X.index)
         elif method == 'tsne':
             from sklearn.manifold import TSNE
             tsne = TSNE(n_components=n_components)
-            self.X = pd.DataFrame(tsne.fit_transform(self.X), columns=[f'TSNE{i+1}' for i in range(n_components)])
+            self.X = pd.DataFrame(tsne.fit_transform(self.X), columns=[f'TSNE{i+1}' for i in range(n_components)], index=self.X.index)
+        else:
+            raise ValueError(f"Unsupported dimensionality reduction method: {method}")
+        logger.info(f"Dimensionality reduced using {method} to {n_components} components.")
