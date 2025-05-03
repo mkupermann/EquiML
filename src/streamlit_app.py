@@ -29,5 +29,7 @@ if uploaded_file:
         metrics = evaluation.evaluate()
         st.write("Evaluation Metrics:", metrics)
         
-        evaluation.plot_fairness_metrics('selection_rate', kind='bar', save_path='selection_rate.png')
+        if sensitive_features:
+            sensitive_feature = sensitive_features[0]  # Use the first sensitive feature
+            evaluation.plot_fairness_metrics('selection_rate', sensitive_feature=sensitive_feature, kind='bar', save_path='selection_rate.png')
         st.image('selection_rate.png')
