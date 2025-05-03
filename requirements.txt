@@ -1,0 +1,10 @@
+scikit-learn
+fairlearn
+shap
+matplotlib
+seaborn
+streamlit
+pandas
+numpy
+scipy
+joblib
