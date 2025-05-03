@@ -21,8 +21,15 @@ setup(
         'statsmodels',
         'lime',
         'scipy',
-        'joblib'
+        'joblib',
+        'lightgbm'
     ],
+    extras_require={
+        'image': ['opencv-python>=4.5.5.64'],
+        'text': ['nltk>=3.7'],
+        'dev': ['pytest>=7.1.1', 'flake8>=4.0.1', 'sphinx>=4.4.0', 'coverage>=6.3.2'],
+        'deploy': ['docker>=5.0.3']
+    },
     author='Michael Kupermann',
     description='An advanced framework for equitable and responsible machine learning with support for fairness, interpretability, and robustness.',
     long_description=open('README.md').read(),
@@ -34,4 +41,10 @@ setup(
         'Operating System :: OS Independent',
     ],
     python_requires='>=3.6',
+    entry_points={
+        'console_scripts': [
+            'equiml-app = equiml.app:main',  # Adjust module path as needed
+        ],
+    },
+    include_package_data=True,
 )
