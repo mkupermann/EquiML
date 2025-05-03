@@ -167,6 +167,6 @@ EquiML is released under the **[MIT License](#)**. See the [LICENSE](#) file for
 ## Contact
 Have questions or feedback? Reach out to us:
 - **GitHub Issues**: Report bugs or request features [here](#).
-- **Email**: Contact the maintainer at [email@example.com](#).
+
 
 Join us in building a future where AI is fair, transparent, and accountable for all!
