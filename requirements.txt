@@ -6,3 +6,5 @@ seaborn
 streamlit
 pandas
 numpy
+scipy
+joblib
