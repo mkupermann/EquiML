@@ -114,7 +114,7 @@ This code loads the dataset, trains a fair logistic regression model, and evalua
 ---
 
 ## Tutorial for Beginners
-If you’re new to machine learning or fairness, our **[Beginner’s Tutorial](#)** is the perfect place to start. It walks you through the entire process of using EquiML with the Adult Income dataset, explaining each step in detail.
+If you’re new to machine learning or fairness, our **[Beginner’s Tutorial](https://github.com/mkupermann/EquiML/blob/main/Beginner%E2%80%99s%20Tutorial%20for%20Using%20EquiML.md)** is the perfect place to start. It walks you through the entire process of using EquiML with the Adult Income dataset, explaining each step in detail.
 
 In the tutorial, you’ll learn:
 - What machine learning and fairness are.
