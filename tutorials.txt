@@ -1,0 +1,31 @@
+Tutorials
+=========
+
+Using EquiML with the Adult Income Dataset
+-----------------------------------------
+
+This tutorial demonstrates how to use EquiML to predict income while ensuring fairness with respect to gender.
+
+1. Load the dataset:
+   .. code-block:: python
+
+      from src.data import Data
+      data = Data(sensitive_features=['sex'])
+      data.load_data('adult.csv')
+      data.preprocess(target_column='income')
+
+2. Train a model:
+   .. code-block:: python
+
+      from src.model import Model
+      model = Model(algorithm='logistic_regression', fairness_constraint='demographic_parity')
+      model.train(data.X_train, data.y_train, sensitive_features=data.X_train[['sex_Female']])
+
+3. Evaluate fairness:
+   .. code-block:: python
+
+      from src.evaluation import Evaluation
+      evaluation = Evaluation(model, data.X_test, data.y_test, sensitive_features=data.X_test[['sex_Female']])
+      metrics = evaluation.evaluate()
+      print(metrics)
+      evaluation.plot_fairness_metrics('selection_rate')
