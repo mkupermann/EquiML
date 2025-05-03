@@ -31,4 +31,4 @@ impact = deployment.simulate(society='urban_population')
 ```
 
 ## Conclusion
-EquiML is a conceptual framework addressing real-world AI ethics challenges. While not yet implemented, its adoption could revolutionize responsible AI development. Contributions are welcome to build this vision into a practical toolset.
+EquiML is a conceptual framework addressing real-world AI ethics challenges. While still under development, its adoption could create responsible AI development. Contributions are welcome to build this vision into a practical toolset.
