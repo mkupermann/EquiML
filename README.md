@@ -160,7 +160,7 @@ For more details, see our **[Contributing Guide](#)**.
 ---
 
 ## License
-EquiML is released under the **[MIT License](#)**. See the [LICENSE](#) file for more information.
+EquiML is released under the **[MIT License](#)**. See the [LICENSE](https://github.com/mkupermann/EquiML/blob/main/MIT%20License.txt) file for more information.
 
 ---
 
