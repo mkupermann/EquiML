@@ -155,7 +155,7 @@ evaluation.plot_fairness_metrics('selection_rate')
 This code demonstrates loading data, training a fair model, evaluating performance, and visualizing fairness metrics.
 
 ## Tutorial for Beginners
-New to machine learning or fairness? Our **[Beginner’s Tutorial](https://github.com/mkupermann/EquiML/blob/main/docs/tutorials.rst)** guides you through using EquiML with the Adult Income dataset. It covers:
+New to machine learning or fairness? Our **[Beginner’s Tutorial](https://github.com/mkupermann/EquiML/blob/main/tests/Test%20and%20Try%20User_Guide.markdown)** guides you through using EquiML with the Adult Income dataset. It covers:
 - Basics of machine learning and fairness.
 - Setting up EquiML.
 - Loading and preprocessing data.
