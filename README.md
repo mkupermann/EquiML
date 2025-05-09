@@ -40,8 +40,8 @@ EquiML provides a robust set of tools:
 - **Bias Detection and Mitigation**: Identify and reduce biases in datasets using advanced statistical methods.
 - **Fair Model Training**: Train models with fairness constraints like demographic parity and equalized odds, leveraging libraries like Fairlearn.
 - **Comprehensive Evaluation**: Assess model performance (accuracy, F1-score, ROC-AUC) and fairness metrics across demographic groups.
-- **Model Explainability**: Use SHAP and LIME to understand feature contributions and model decisions.
-- **Data Visualization**: Generate intuitive plots for bias, fairness, and performance metrics using Matplotlib, Seaborn, and Plotly.
+- **Model Explainability**: SHAP and LIME to understand feature contributions and model decisions.
+- **Data Visualization**: intuitive plots for bias, fairness, and performance metrics using Matplotlib, Seaborn, and Plotly.
 - **User-Friendly Interface**: A Streamlit dashboard enables non-technical users to interact with the framework.
 - **Extensibility**: Open-source architecture allows easy addition of new algorithms, metrics, or visualizations.
 - **Robustness and Monitoring**: Tools for data drift detection, noise sensitivity analysis, and performance monitoring.
