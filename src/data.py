@@ -36,7 +36,7 @@ class Data:
         X_train, X_test, y_train, y_test: Training and testing splits.
     """
     
-    def __init__(self, dataset_path: Optional[str] = None, sensitive_features: Optional[List[str]] = None, text_features: Optional[List[str]] = None, image_features: Optional[List[str]] = None):
+    def __init__(self, dataset_path: Optional[str] = None, sensitive_features: Optional[List[str]] = None, text_features: Optional[List[str]] = None, image_features: Optional[List[str]] = None, stopword_language: str = 'english'):
         """
         Initializes the Data object.
         
@@ -45,11 +45,13 @@ class Data:
             sensitive_features (list, optional): List of sensitive feature names.
             text_features (list, optional): List of text feature names for processing.
             image_features (list, optional): List of image feature names or paths for processing.
+            stopword_language (str): The language for stopwords (default: 'english').
         """
         self.dataset_path = dataset_path
         self.sensitive_features = sensitive_features or []
         self.text_features = text_features or []
         self.image_features = image_features or []
+        self.stopword_language = stopword_language
         self.df = None
         self.X = None
         self.y = None
@@ -87,7 +89,7 @@ class Data:
             logger.error(f"Failed to load data: {str(e)}")
             raise
 
-    def preprocess(self, target_column: str, numerical_features: Optional[List[str]] = None, categorical_features: Optional[List[str]] = None, impute_strategy: str = 'mean', scaling: str = 'standard') -> None:
+    def preprocess(self, target_column: str, numerical_features: Optional[List[str]] = None, categorical_features: Optional[List[str]] = None, impute_strategy: str = 'mean', scaling: str = 'standard', max_text_features: Optional[int] = 100) -> None:
         """
         Preprocesses the data by handling missing values, encoding categorical variables,
         scaling numerical features, processing text features, and handling image data.
@@ -98,6 +100,7 @@ class Data:
             categorical_features (list, optional): List of categorical feature names.
             impute_strategy (str): Imputation strategy for numerical features ('mean', 'median', 'constant').
             scaling (str): Scaling method for numerical features ('standard', 'minmax', 'robust').
+            max_text_features (int, optional): The maximum number of features for TF-IDF vectorization.
         
         Raises:
             ValueError: If data is not loaded or required columns are missing.
@@ -107,7 +110,8 @@ class Data:
         if target_column not in self.df.columns:
             raise ValueError(f"Target column '{target_column}' not found in dataset.")
         
-        self.y = self.df[target_column]
+        le = LabelEncoder()
+        self.y = pd.Series(le.fit_transform(self.df[target_column]), name=target_column)
         self.X = self.df.drop(columns=[target_column])
         
         # Handle missing values
@@ -124,9 +128,9 @@ class Data:
                 if feature not in self.X.columns:
                     raise ValueError(f"Text feature '{feature}' not found in dataset.")
                 self.X[feature] = self.X[feature].apply(self._clean_text)
-                vectorizer = TfidfVectorizer(max_features=100)
-                text_features = vectorizer.fit_transform(self.X[feature]).toarray()
-                text_df = pd.DataFrame(text_features, columns=[f"{feature}_{i}" for i in range(100)], index=self.X.index)
+                vectorizer = TfidfVectorizer(max_features=max_text_features)
+                text_features_array = vectorizer.fit_transform(self.X[feature]).toarray()
+                text_df = pd.DataFrame(text_features_array, columns=[f"{feature}_{i}" for i in range(text_features_array.shape[1])], index=self.X.index)
                 self.X = pd.concat([self.X.drop(columns=[feature]), text_df], axis=1)
         
         # Process image features (assuming paths to images are provided)
@@ -174,11 +178,11 @@ class Data:
             text = str(text).lower()
             text = text.translate(str.maketrans('', '', string.punctuation))
             tokens = word_tokenize(text)
-            tokens = [word for word in tokens if word not in stopwords.words('english')]
+            tokens = [word for word in tokens if word not in stopwords.words(self.stopword_language)]
             return ' '.join(tokens)
         except Exception as e:
             logger.error(f"Text cleaning failed: {str(e)}")
-            return ""
+            raise ValueError(f"Text cleaning failed: {str(e)}")
 
     def _process_images(self, image_paths: pd.Series, target_size: Tuple[int, int] = (32, 32)) -> np.ndarray:
         """
@@ -199,10 +203,10 @@ class Data:
                     img_resized = cv2.resize(img, target_size)
                     processed_images.append(img_resized.flatten())
                 else:
-                    processed_images.append(np.zeros(target_size[0] * target_size[1]))
+                    raise ValueError(f"Image at path '{path}' could not be read.")
             except Exception as e:
                 logger.warning(f"Failed to process image '{path}': {str(e)}")
-                processed_images.append(np.zeros(target_size[0] * target_size[1]))
+                raise ValueError(f"Failed to process image '{path}': {str(e)}")
         return np.array(processed_images)
 
     def detect_outliers(self, features: Optional[List[str]] = None, method: str = 'zscore', threshold: float = 3.0, action: str = 'flag') -> Optional[pd.DataFrame]:

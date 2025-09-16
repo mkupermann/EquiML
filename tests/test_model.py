@@ -12,13 +12,13 @@ def test_model_training_and_evaluation():
         'target': [0, 0, 1, 0, 1, 1]
     })
     data.df = df
-    data.preprocess(target_column='target')
+    data.preprocess(target_column='target', categorical_features=['sensitive'])
     data.split_data(test_size=0.5, random_state=42)
     
     # Test logistic regression without fairness
-    model = Model(algorithm='logistic_regression')
-    model.train(data.X_train, data.y_train)
-    metrics = model.evaluate(data.X_test, data.y_test, sensitive_features=data.X_test[['sensitive_B']])
+    model = Model(algorithm='logistic_regression', fairness_constraint='demographic_parity')
+    model.train(data.X_train, data.y_train, sensitive_features=data.X_train['sensitive_B'])
+    metrics = model.evaluate(data.X_test, data.y_test, sensitive_features=data.X_test['sensitive_B'])
     assert 'accuracy' in metrics
     assert 'f1_score' in metrics
     assert 'demographic_parity_difference' in metrics
