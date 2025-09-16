@@ -47,7 +47,7 @@ class Model:
         preprocessor: Preprocessing pipeline for data transformation.
     """
     
-    def __init__(self, algorithm: str = 'logistic_regression', fairness_constraint: Optional[str] = None, task: str = 'classification'):
+    def __init__(self, algorithm: str = 'logistic_regression', fairness_constraint: Optional[str] = None, task: str = 'classification', max_iter: int = 1000):
         """
         Initialize the Model class.
 
@@ -55,6 +55,7 @@ class Model:
             algorithm (str): Algorithm to use (e.g., 'logistic_regression', 'random_forest', etc.).
             fairness_constraint (str, optional): Fairness constraint (e.g., 'demographic_parity').
             task (str): Task type ('classification' or 'regression').
+            max_iter (int): Maximum iterations for Logistic Regression.
 
         Raises:
             ValueError: If algorithm or task is unsupported.
@@ -65,7 +66,7 @@ class Model:
         self.model = None
         self.preprocessor = None
         self.supported_algorithms = {
-            'logistic_regression': LogisticRegression(max_iter=1000) if task == 'classification' else LinearRegression(),
+            'logistic_regression': LogisticRegression(max_iter=max_iter) if task == 'classification' else LinearRegression(),
             'decision_tree': DecisionTreeClassifier() if task == 'classification' else DecisionTreeRegressor(),
             'random_forest': RandomForestClassifier() if task == 'classification' else RandomForestRegressor(),
             'svm': SVC(probability=True) if task == 'classification' else SVR(),
@@ -149,9 +150,12 @@ class Model:
             raise ValueError("Model not trained.")
         if self.task != 'classification':
             raise ValueError("Probability predictions only available for classification tasks.")
-        if not hasattr(self.model, 'predict_proba'):
+        if hasattr(self.model, 'predict_proba'):
+            return self.model.predict_proba(X)
+        elif hasattr(self.model, 'estimator') and hasattr(self.model.estimator, 'predict_proba'):
+            return self.model.estimator.predict_proba(X)
+        else:
             raise ValueError(f"{self.algorithm} does not support probability predictions.")
-        return self.model.predict_proba(X)
 
     def explain_prediction(self, X: pd.DataFrame) -> np.ndarray:
         """
@@ -169,28 +173,14 @@ class Model:
         if self.model is None:
             raise ValueError("Model not trained.")
         try:
-            if isinstance(self.model, ExponentiatedGradient):
-                explainer = shap.KernelExplainer(self.model.predict, X)
-            else:
-                explainer_type = {
-                    'decision_tree': shap.TreeExplainer,
-                    'random_forest': shap.TreeExplainer,
-                    'xgboost': shap.TreeExplainer,
-                    'logistic_regression': shap.LinearExplainer,
-                    'svm': shap.KernelExplainer
-                }.get(self.algorithm, shap.KernelExplainer)
-                if explainer_type == shap.LinearExplainer:
-                    explainer = explainer_type(self.model, X)
-                elif explainer_type == shap.KernelExplainer:
-                    explainer = explainer_type(self.model.predict, X)
-                else:
-                    explainer = explainer_type(self.model)
-            return explainer.shap_values(X)
+            explainer = shap.Explainer(self.model, X)
+            shap_values = explainer(X)
+            return shap_values.values
         except Exception as e:
             logger.error(f"SHAP explanation failed: {str(e)}")
             raise
 
-    def explain_instance(self, instance: pd.Series, X_train: pd.DataFrame, feature_names: List[str], class_names: Optional[List[str]] = None) -> object:
+    def explain_instance(self, instance: pd.Series, X_train: pd.DataFrame, feature_names: List[str], class_names: Optional[List[str]] = None, mode: str = 'classification') -> object:
         """
         Explain a single instance using LIME.
 
@@ -199,17 +189,23 @@ class Model:
             X_train (pd.DataFrame): Training data for LIME explainer.
             feature_names (list): Names of features.
             class_names (list, optional): Names of classes.
+            mode (str): 'classification' or 'regression'.
 
         Returns:
             object: LIME explanation object.
 
         Raises:
-            ValueError: If model is not trained or task is not classification.
+            ValueError: If model is not trained.
         """
-        if self.task != 'classification':
-            raise ValueError("LIME explanations only available for classification tasks.")
-        explainer = LimeTabularExplainer(X_train.values, feature_names=feature_names, class_names=class_names)
-        explanation = explainer.explain_instance(instance.values, self.predict_proba)
+        if self.model is None:
+            raise ValueError("Model not trained.")
+
+        if isinstance(self.model, ExponentiatedGradient):
+            return "LIME explanations are not supported for ExponentiatedGradient models."
+
+        predict_fn = self.predict_proba if mode == 'classification' else self.predict
+        explainer = LimeTabularExplainer(X_train.values, feature_names=feature_names, class_names=class_names, mode=mode)
+        explanation = explainer.explain_instance(instance.values, predict_fn)
         return explanation
 
     def evaluate(self, X_test: pd.DataFrame, y_test: pd.Series, sensitive_features: Optional[pd.Series] = None) -> Dict:
@@ -232,7 +228,10 @@ class Model:
                 metrics['f1_score'] = f1_score(y_test, y_pred, average='macro')
                 if hasattr(self.model, 'predict_proba'):
                     y_pred_proba = self.predict_proba(X_test)
-                    metrics['roc_auc'] = roc_auc_score(y_test, y_pred_proba, multi_class='ovr')
+                    if self.task == 'classification' and y_pred_proba.ndim > 1:
+                        metrics['roc_auc'] = roc_auc_score(y_test, y_pred_proba[:, 1])
+                    else:
+                        metrics['roc_auc'] = roc_auc_score(y_test, y_pred_proba)
             elif self.task == 'regression':
                 metrics['mse'] = mean_squared_error(y_test, y_pred)
                 metrics['r2'] = r2_score(y_test, y_pred)
@@ -255,6 +254,8 @@ class Model:
                     fairness_metrics[f'{metric_name}_difference'] = max(group_values) - min(group_values)
                 metrics.update(fairness_metrics)
                 if self.task == 'classification':
+                    metrics['demographic_parity_difference'] = demographic_parity_difference(y_test, y_pred, sensitive_features=sensitive_features)
+                    metrics['equalized_odds_difference'] = equalized_odds_difference(y_test, y_pred, sensitive_features=sensitive_features)
                     selection_rates = [group['selection_rate'] for group in metrics['group_metrics'].values()]
                     metrics['disparate_impact_ratio'] = min(selection_rates) / max(selection_rates) if max(selection_rates) > 0 else 1.0
             return metrics
@@ -430,7 +431,7 @@ class Model:
         with open(path, "wb") as f:
             f.write(onnx_model.SerializeToString())
 
-    def cross_validate(self, X: pd.DataFrame, y: pd.Series, sensitive_features: Optional[pd.Series] = None, cv: int = 5) -> pd.Series:
+    def cross_validate(self, X: pd.DataFrame, y: pd.Series, sensitive_features: Optional[pd.Series] = None, cv: int = 5) -> pd.DataFrame:
         """
         Perform cross-validation with performance and fairness metrics.
 
@@ -441,18 +442,21 @@ class Model:
             cv (int): Number of cross-validation folds.
 
         Returns:
-            pd.Series: Average metrics across folds.
+            pd.DataFrame: Metrics for each fold.
         """
         kf = KFold(n_splits=cv, shuffle=True, random_state=42)
         results = []
         for train_idx, test_idx in kf.split(X):
             X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
             y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-            sens_train = sensitive_features.iloc[train_idx] if sensitive_features is not None else None
-            self.train(X_train, y_train, sens_train)
-            metrics = self.evaluate(X_test, y_test, sens_train)
+
+            sf_train = sensitive_features.iloc[train_idx] if sensitive_features is not None else None
+            sf_test = sensitive_features.iloc[test_idx] if sensitive_features is not None else None
+
+            self.train(X_train, y_train, sensitive_features=sf_train)
+            metrics = self.evaluate(X_test, y_test, sensitive_features=sf_test)
             results.append(metrics)
-        return pd.DataFrame(results).mean()
+        return pd.DataFrame(results)
 
     def detect_data_drift(self, X_train: pd.DataFrame, X_new: pd.DataFrame, threshold: float = 0.05) -> Dict:
         """
@@ -493,31 +497,41 @@ class Model:
             scores.append(score)
         return {'mean': np.mean(scores), 'std': np.std(scores)}
 
-    def auto_select_algorithm(self, X: pd.DataFrame, y: pd.Series, sensitive_features: Optional[pd.Series] = None, algorithms: Optional[List[str]] = None) -> tuple:
+    def auto_select_algorithm(self, X: pd.DataFrame, y: pd.Series, sensitive_features: Optional[pd.Series] = None, algorithms: Optional[List[str]] = None, cv: int = 5) -> tuple:
         """
-        Automatically select the best algorithm.
+        Automatically select the best algorithm based on cross-validation.
 
         Args:
             X (pd.DataFrame): Features.
             y (pd.Series): Target.
             sensitive_features (pd.Series, optional): Sensitive features.
             algorithms (list, optional): List of algorithms to evaluate.
+            cv (int): Number of cross-validation folds.
 
         Returns:
             tuple: (Best algorithm, best score).
         """
         if algorithms is None:
             algorithms = list(self.supported_algorithms.keys())
+
         best_score = -np.inf
         best_algo = None
+
         for algo in algorithms:
-            self.algorithm = algo
-            self.train(X, y, sensitive_features)
-            metrics = self.evaluate(X, y, sensitive_features)
-            score = metrics['accuracy'] - metrics.get('demographic_parity_difference', 0) if self.task == 'classification' else metrics['r2']
+            model = Model(algorithm=algo, task=self.task, fairness_constraint=self.fairness_constraint)
+            cv_results = model.cross_validate(X, y, sensitive_features, cv=cv)
+
+            perf_metric = 'test_accuracy' if self.task == 'classification' else 'test_r2'
+            fairness_metric = 'test_fairness' if 'test_fairness' in cv_results else None
+
+            score = cv_results[perf_metric].mean()
+            if fairness_metric:
+                score -= cv_results[fairness_metric].mean()
+
             if score > best_score:
                 best_score = score
                 best_algo = algo
+
         self.algorithm = best_algo
         self.train(X, y, sensitive_features)
         return best_algo, best_score
@@ -572,17 +586,14 @@ class Model:
             comparison.append(metrics)
         return pd.DataFrame(comparison)
 
-    def plot_roc_curve(self, X_test: pd.DataFrame, y_test: pd.Series, output_path: str = 'roc_curve.png') -> None:
+    def plot_roc_curve(self, X_test: pd.DataFrame, y_test: pd.Series, output_path: Optional[str] = None) -> None:
         """
-        Plot ROC curve for classification tasks and save to file.
+        Plot ROC curve for classification tasks and optionally save to file.
 
         Args:
             X_test (pd.DataFrame): Test features.
             y_test (pd.Series): Test target.
-            output_path (str): Path to save the plot.
-
-        Raises:
-            ValueError: If task is not classification.
+            output_path (str, optional): Path to save the plot. If None, plot is shown.
         """
         if self.task != 'classification':
             raise ValueError("ROC curve only for classification.")
@@ -596,51 +607,63 @@ class Model:
         plt.ylabel('True Positive Rate')
         plt.title('ROC Curve')
         plt.legend()
-        plt.savefig(output_path)
+        if output_path:
+            plt.savefig(output_path)
+        else:
+            plt.show()
         plt.close()
 
-    def plot_fairness_metrics(self, metrics: Dict, sensitive_feature: str, output_path: str = 'fairness_metrics.png') -> None:
+    def plot_fairness_metrics(self, metrics: Dict, sensitive_feature: str, output_path: Optional[str] = None) -> None:
         """
-        Plot fairness metrics and save to file.
+        Plot fairness metrics and optionally save to file.
 
         Args:
             metrics (dict): Evaluation metrics.
             sensitive_feature (str): Name of the sensitive feature.
-            output_path (str): Path to save the plot.
+            output_path (str, optional): Path to save the plot. If None, plot is shown.
         """
         df = pd.DataFrame(list(metrics['group_metrics'].items()), columns=['Group', 'Metrics'])
         df = df.join(pd.DataFrame(df.pop('Metrics').values.tolist()))
         plt.figure()
         sns.barplot(x='Group', y='accuracy', data=df)
         plt.title(f'Accuracy by {sensitive_feature}')
-        plt.savefig(output_path)
+        if output_path:
+            plt.savefig(output_path)
+        else:
+            plt.show()
         plt.close()
 
-    def plot_shap_summary(self, shap_values: np.ndarray, X: pd.DataFrame, output_path: str = 'shap_summary.png') -> None:
+    def plot_shap_summary(self, shap_values: np.ndarray, X: pd.DataFrame, output_path: Optional[str] = None) -> None:
         """
         Save SHAP summary plot.
 
         Args:
             shap_values (np.ndarray): SHAP values.
             X (pd.DataFrame): Features.
-            output_path (str): Path to save the plot.
+            output_path (str, optional): Path to save the plot. If None, plot is shown.
         """
         shap.summary_plot(shap_values, X, show=False)
-        plt.savefig(output_path)
+        if output_path:
+            plt.savefig(output_path)
+        else:
+            plt.show()
         plt.close()
 
-    def plot_partial_dependence(self, X: pd.DataFrame, features: List[int], feature_names: List[str], output_path: str = 'pdp.png') -> None:
+    def plot_partial_dependence(self, X: pd.DataFrame, features: List[int], feature_names: List[str], output_path: Optional[str] = None) -> None:
         """
-        Plot Partial Dependence Plots and save to file.
+        Plot Partial Dependence Plots and optionally save to file.
 
         Args:
             X (pd.DataFrame): Features.
             features (list): Feature indices to plot.
             feature_names (list): Names of features.
-            output_path (str): Path to save the plot.
+            output_path (str, optional): Path to save the plot. If None, plot is shown.
         """
         PartialDependenceDisplay.from_estimator(self.model, X, features, feature_names=feature_names)
-        plt.savefig(output_path)
+        if output_path:
+            plt.savefig(output_path)
+        else:
+            plt.show()
         plt.close()
 
     def generate_report(self, X_test: pd.DataFrame, y_test: pd.Series, sensitive_features: Optional[pd.Series] = None, output_path: str = 'report.json') -> Dict:
