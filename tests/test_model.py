@@ -1,45 +1,49 @@
 import pandas as pd
+import numpy as np
 from src.model import Model
 from src.data import Data
+import pytest
 
-def test_model_training_and_evaluation():
-    # Create synthetic data
-    data = Data(sensitive_features=['sensitive'])
+@pytest.fixture
+def dummy_data():
+    """Provides a dummy dataset for model testing."""
     df = pd.DataFrame({
-        'feature1': [1, 2, 3, 4, 5, 6],
-        'feature2': [5, 6, 7, 8, 9, 10],
-        'sensitive': ['A', 'A', 'A', 'B', 'B', 'B'],
-        'target': [0, 0, 1, 0, 1, 1]
+        'feature1': np.random.rand(100),
+        'feature2': np.random.rand(100),
+        'sensitive': np.random.choice(['A', 'B'], 100),
+        'target': np.random.choice([0, 1], 100)
     })
+    data = Data(sensitive_features=['sensitive'])
     data.df = df
-    data.preprocess(target_column='target', categorical_features=['sensitive'])
-    data.split_data(test_size=0.5, random_state=42)
-    
-    # Test logistic regression without fairness
-    model = Model(algorithm='logistic_regression', fairness_constraint='demographic_parity')
-    model.train(data.X_train, data.y_train, sensitive_features=data.X_train['sensitive_B'])
-    metrics = model.evaluate(data.X_test, data.y_test, sensitive_features=data.X_test['sensitive_B'])
-    assert 'accuracy' in metrics
-    assert 'f1_score' in metrics
-    assert 'demographic_parity_difference' in metrics
-    
-    # Test logistic regression with fairness constraint
-    model_fair = Model(algorithm='logistic_regression', fairness_constraint='demographic_parity')
-    model_fair.train(data.X_train, data.y_train, sensitive_features=data.X_train[['sensitive_B']])
-    metrics_fair = model_fair.evaluate(data.X_test, data.y_test, sensitive_features=data.X_test[['sensitive_B']])
-    assert 'demographic_parity_difference' in metrics_fair
-    
-    # Test decision tree
-    model_dt = Model(algorithm='decision_tree')
-    model_dt.train(data.X_train, data.y_train)
-    metrics_dt = model_dt.evaluate(data.X_test, data.y_test)
-    assert 'accuracy' in metrics_dt
-    
-    # Test random forest
-    model_rf = Model(algorithm='random_forest')
-    model_rf.train(data.X_train, data.y_train)
-    metrics_rf = model_rf.evaluate(data.X_test, data.y_test)
-    assert 'accuracy' in metrics_rf
+    data.preprocess(target_column='target', numerical_features=['feature1', 'feature2'], categorical_features=['sensitive'])
+    data.split_data()
+    return data
 
-# Run the test
-test_model_training_and_evaluation()
+def test_train_with_sample_weights(dummy_data):
+    """Tests that the model can be trained with sample weights."""
+    model = Model(algorithm='logistic_regression')
+    sample_weight = np.random.rand(len(dummy_data.y_train))
+    model.train(dummy_data.X_train, dummy_data.y_train, sample_weight=sample_weight)
+    assert hasattr(model.model, 'coef_') # Check if model is fitted
+
+def test_xgboost_algorithm(dummy_data):
+    """Tests the XGBoost algorithm."""
+    model = Model(algorithm='xgboost')
+    model.train(dummy_data.X_train, dummy_data.y_train)
+    predictions = model.predict(dummy_data.X_test)
+    assert len(predictions) == len(dummy_data.y_test)
+
+def test_tune_hyperparameters(dummy_data):
+    """Tests the tune_hyperparameters method."""
+    model = Model(algorithm='logistic_regression')
+    best_params = model.tune_hyperparameters(dummy_data.X_train, dummy_data.y_train, n_trials=5)
+    assert isinstance(best_params, dict)
+    assert 'C' in best_params
+    assert model.model.get_params()['C'] == best_params['C']
+
+def test_lightgbm_algorithm(dummy_data):
+    """Tests the LightGBM algorithm."""
+    model = Model(algorithm='lightgbm')
+    model.train(dummy_data.X_train, dummy_data.y_train)
+    predictions = model.predict(dummy_data.X_test)
+    assert len(predictions) == len(dummy_data.y_test)

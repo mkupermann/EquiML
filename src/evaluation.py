@@ -5,7 +5,7 @@ from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_s
                              mean_absolute_error, matthews_corrcoef, log_loss, balanced_accuracy_score, 
                              roc_curve, precision_recall_curve, brier_score_loss)
 from sklearn.calibration import calibration_curve
-from fairlearn.metrics import MetricFrame, demographic_parity_difference, equalized_odds_difference, selection_rate
+from fairlearn.metrics import MetricFrame, demographic_parity_difference, equalized_odds_difference, equal_opportunity_difference, selection_rate
 from scipy.stats import ks_2samp, ttest_ind, permutation_test, chi2_contingency
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import cross_val_score
@@ -78,12 +78,12 @@ class EquiMLEvaluation:
             metrics.update({
                 'accuracy': accuracy_score(y_true, y_pred),
                 'balanced_accuracy': balanced_accuracy_score(y_true, y_pred),
-                'precision': precision_score(y_true, y_pred, average='weighted', zero_division='warn'),
-                'recall': recall_score(y_true, y_pred, average='weighted', zero_division='warn'),
-                'f1_score': f1_score(y_true, y_pred, average='weighted', zero_division='warn'),
+                'precision': precision_score(y_true, y_pred, average='weighted', zero_division=0),
+                'recall': recall_score(y_true, y_pred, average='weighted', zero_division=0),
+                'f1_score': f1_score(y_true, y_pred, average='weighted', zero_division=0),
                 'matthews_corrcoef': matthews_corrcoef(y_true, y_pred),
                 'confusion_matrix': confusion_matrix(y_true, y_pred).tolist(),
-                'classification_report': classification_report(y_true, y_pred, output_dict=True, zero_division='warn')
+                'classification_report': classification_report(y_true, y_pred, output_dict=True, zero_division=0)
             })
             if y_pred_proba is not None:
                 n_classes = y_pred_proba.shape[1] if y_pred_proba.ndim > 1 else 2
@@ -126,6 +126,7 @@ class EquiMLEvaluation:
             metrics.update({
                 'demographic_parity_difference': demographic_parity_difference(y_true, y_pred, sensitive_features=sensitive_features),
                 'equalized_odds_difference': equalized_odds_difference(y_true, y_pred, sensitive_features=sensitive_features),
+                'equal_opportunity_difference': equal_opportunity_difference(y_true, y_pred, sensitive_features=sensitive_features),
                 'disparate_impact': self.compute_disparate_impact(y_true, y_pred, sensitive_features)
             })
             mf = MetricFrame(metrics={'accuracy': accuracy_score, 'precision': precision_score, 'recall': recall_score},
@@ -141,12 +142,20 @@ class EquiMLEvaluation:
     def compute_disparate_impact(self, y_true, y_pred, sensitive_features):
         """Calculate Disparate Impact ratio for each sensitive feature (classification only)."""
         di_ratios = {}
-
-        if isinstance(sensitive_features, pd.Series):
-            sensitive_features = sensitive_features.to_frame()
-
-        for feature in sensitive_features.columns:
-            sensitive = sensitive_features[feature]
+        if isinstance(sensitive_features, pd.DataFrame):
+            for feature in sensitive_features.columns:
+                sensitive = sensitive_features[feature]
+                groups = sensitive.unique()
+                rates = {}
+                for group in groups:
+                    mask = (sensitive == group)
+                    rates[group] = selection_rate(y_true[mask], y_pred[mask]) if mask.sum() > 0 else 0
+                if len(rates) >= 2:
+                    min_rate = min(rates.values())
+                    max_rate = max(rates.values())
+                    di_ratios[feature] = min_rate / max_rate if max_rate > 0 else 1.0
+        elif isinstance(sensitive_features, pd.Series):
+            sensitive = sensitive_features
             groups = sensitive.unique()
             rates = {}
             for group in groups:
@@ -155,7 +164,7 @@ class EquiMLEvaluation:
             if len(rates) >= 2:
                 min_rate = min(rates.values())
                 max_rate = max(rates.values())
-                di_ratios[feature] = min_rate / max_rate if max_rate > 0 else 1.0
+                di_ratios[sensitive.name] = min_rate / max_rate if max_rate > 0 else 1.0
         return di_ratios
     
     def compute_robustness_metrics(self, model, X, y_true, sensitive_features, cv, task):
@@ -166,19 +175,14 @@ class EquiMLEvaluation:
         score_metric = 'accuracy' if task == 'classification' else 'r2'
 
         return {
-            'cv_mean': cv_scores[score_metric].mean(),
-            'cv_std': cv_scores[score_metric].std(),
+            'cv_mean': cv_scores['test_' + score_metric].mean(),
+            'cv_std': cv_scores['test_' + score_metric].std(),
             'noise_sensitivity': self.compute_noise_sensitivity(model, X, y_true, task)
         }
     
     def compute_noise_sensitivity(self, model, X, y_true, task, noise_level=0.1):
         """Evaluate model sensitivity to input noise."""
-        noise = np.random.normal(0, noise_level, X.shape)
-        if isinstance(X, pd.DataFrame):
-            noise = pd.DataFrame(noise, columns=X.columns, index=X.index)
-            for col in X.columns:
-                noise[col] = noise[col] * X[col].std()
-        X_noisy = X + noise
+        X_noisy = X + np.random.normal(0, noise_level, X.shape)
         y_pred_noisy = model.predict(X_noisy)
         return accuracy_score(y_true, y_pred_noisy) if task == 'classification' else r2_score(y_true, y_pred_noisy)
     
@@ -189,7 +193,7 @@ class EquiMLEvaluation:
             'shap_values': self.compute_shap_values(model, X)
         }
         if isinstance(X, pd.DataFrame):
-            metrics['lime_explanations'] = self.compute_lime_explanations(model, X, y_true, instance_idx=0)
+            metrics['lime_explanations'] = self.compute_lime_explanations(model, X, y_true)
         return metrics
     
     def compute_permutation_importance(self, model, X, y_true, task):
@@ -207,12 +211,14 @@ class EquiMLEvaluation:
         shap_values = explainer(X)
         return shap_values.values.mean(axis=0).tolist()
     
-    def compute_lime_explanations(self, model, X, y_true, instance_idx: int = 0, num_features: int = 5):
-        """Compute LIME explanations for a specific instance."""
-        explanation = model.explain_instance(X.iloc[instance_idx], X, feature_names=X.columns.tolist(), class_names=[str(c) for c in y_true.unique()], mode=model.task)
-        if isinstance(explanation, str):
-            return explanation
-        return explanation.as_list()
+    def compute_lime_explanations(self, model, X, y_true):
+        """Compute LIME explanations for a subset of instances."""
+        try:
+            explainer = lime.lime_tabular.LimeTabularExplainer(X.values, feature_names=X.columns.tolist())
+            exp = explainer.explain_instance(X.iloc[0].values, model.predict_proba, num_features=5)
+            return exp.as_list()
+        except (AttributeError, ValueError):
+            return "LIME explanations not available for this model."
     
     def compute_statistical_tests(self, y_true, y_pred, task):
         """Perform statistical tests to compare predictions and ground truth."""
@@ -232,22 +238,19 @@ class EquiMLEvaluation:
         result = mcnemar(table, exact=True)
         return result.pvalue
     
-    def plot_confusion_matrix(self, y_true, y_pred, output_path=None):
-        """Plot and optionally save confusion matrix."""
+    def plot_confusion_matrix(self, y_true, y_pred, filename='confusion_matrix.png'):
+        """Plot and save confusion matrix."""
         cm = confusion_matrix(y_true, y_pred)
         plt.figure(figsize=(8, 6))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
         plt.xlabel('Predicted')
         plt.ylabel('True')
         plt.title('Confusion Matrix')
-        if output_path:
-            plt.savefig(output_path)
-        else:
-            plt.show()
+        plt.savefig(filename)
         plt.close()
     
-    def plot_roc_curve(self, y_true, y_pred_proba, output_path=None):
-        """Plot and optionally save ROC curve for binary or multi-class classification."""
+    def plot_roc_curve(self, y_true, y_pred_proba, filename='roc_curve.png'):
+        """Plot and save ROC curve for binary or multi-class classification."""
         n_classes = len(np.unique(y_true))
         if n_classes == 2:
             fpr, tpr, _ = roc_curve(y_true, y_pred_proba[:, 1] if y_pred_proba.ndim > 1 else y_pred_proba)
@@ -258,14 +261,11 @@ class EquiMLEvaluation:
             plt.ylabel('True Positive Rate')
             plt.title('ROC Curve')
             plt.legend()
-            if output_path:
-                plt.savefig(output_path)
-            else:
-                plt.show()
+            plt.savefig(filename)
             plt.close()
     
-    def plot_precision_recall_curve(self, y_true, y_pred_proba, output_path=None):
-        """Plot and optionally save Precision-Recall curve for binary classification."""
+    def plot_precision_recall_curve(self, y_true, y_pred_proba, filename='pr_curve.png'):
+        """Plot and save Precision-Recall curve for binary classification."""
         if len(np.unique(y_true)) == 2:
             precision, recall, _ = precision_recall_curve(y_true, y_pred_proba[:, 1] if y_pred_proba.ndim > 1 else y_pred_proba)
             plt.figure(figsize=(8, 6))
@@ -274,14 +274,11 @@ class EquiMLEvaluation:
             plt.xlabel('Recall')
             plt.ylabel('Precision')
             plt.legend()
-            if output_path:
-                plt.savefig(output_path)
-            else:
-                plt.show()
+            plt.savefig(filename)
             plt.close()
     
-    def plot_calibration_curve(self, y_true, y_pred_proba, output_path=None):
-        """Plot and optionally save calibration curve for binary or multi-class classification."""
+    def plot_calibration_curve(self, y_true, y_pred_proba, filename='calibration_curve.png'):
+        """Plot and save calibration curve for binary or multi-class classification."""
         n_classes = len(np.unique(y_true))
         plt.figure(figsize=(8, 6))
         if n_classes == 2:
@@ -296,59 +293,68 @@ class EquiMLEvaluation:
         plt.ylabel('True Probability')
         plt.title('Calibration Curve')
         plt.legend()
-        if output_path:
-            plt.savefig(output_path)
-        else:
-            plt.show()
+        plt.savefig(filename)
         plt.close()
 
-    def plot_fairness_metrics(self, metrics, sensitive_feature, metrics_to_plot=['accuracy', 'precision', 'recall'], output_path=None):
-        """Plot and optionally save fairness metrics across groups."""
+    def plot_fairness_metrics(self, metrics, sensitive_feature, filename='fairness_metrics.png'):
+        """Plot and save fairness metrics across groups."""
         group_metrics = metrics['group_metrics']
+        if 'accuracy' in group_metrics:
+            group_accuracy = group_metrics['accuracy'][sensitive_feature]
+            plt.figure(figsize=(8, 6))
+            sns.barplot(x=list(group_accuracy.keys()), y=list(group_accuracy.values()))
+            plt.title(f'Accuracy by {sensitive_feature}')
+            plt.savefig(filename)
+            plt.close()
 
-        # Convert the group_metrics dictionary to a DataFrame for easier plotting
-        df = pd.DataFrame.from_dict(group_metrics, orient='index')
-        df.index.name = sensitive_feature
-        df.reset_index(inplace=True)
+    def plot_model_comparison(self, results_dict, output_filename="model_comparison.png"):
+        """
+        Plots a comparison of performance and fairness metrics for multiple models.
 
-        for metric in metrics_to_plot:
-            if metric in df.columns:
-                plt.figure(figsize=(8, 6))
-                sns.barplot(x=sensitive_feature, y=metric, data=df)
-                plt.title(f'{metric.capitalize()} by {sensitive_feature}')
+        :param results_dict: A dictionary where keys are model names and values are
+                             their corresponding metrics dictionaries from the evaluate() method.
+        :param output_filename: The filename for the saved plot.
+        """
+        performance_metrics = ['accuracy', 'precision', 'recall', 'f1_score', 'roc_auc']
+        fairness_metrics = ['demographic_parity_difference', 'equalized_odds_difference', 'equal_opportunity_difference']
 
-                if output_path:
-                    # Append metric name to filename
-                    base, ext = output_path.rsplit('.', 1)
-                    metric_output_path = f"{base}_{metric}.{ext}"
-                    plt.savefig(metric_output_path)
-                else:
-                    plt.show()
-                plt.close()
-    
-    def plot_feature_importance(self, importance_dict, output_path=None):
-        """Plot and optionally save feature importance."""
+        # Extracting the data for plotting
+        plot_data = []
+        for model_name, metrics in results_dict.items():
+            for metric in performance_metrics:
+                if metric in metrics:
+                    plot_data.append({'model': model_name, 'metric': metric, 'value': metrics[metric]})
+            for metric in fairness_metrics:
+                if metric in metrics:
+                    plot_data.append({'model': model_name, 'metric': metric, 'value': metrics[metric]})
+
+        plot_df = pd.DataFrame(plot_data)
+
+        plt.figure(figsize=(15, 8))
+        sns.barplot(x='metric', y='value', hue='model', data=plot_df)
+        plt.title('Model Comparison')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        plt.savefig(output_filename)
+        plt.close()
+
+    def plot_feature_importance(self, importance_dict, filename='feature_importance.png'):
+        """Plot and save feature importance."""
         plt.figure(figsize=(10, 6))
         sns.barplot(x=list(importance_dict.values()), y=list(importance_dict.keys()))
         plt.title('Feature Importance')
         plt.xlabel('Importance')
-        if output_path:
-            plt.savefig(output_path)
-        else:
-            plt.show()
+        plt.savefig(filename)
         plt.close()
     
-    def plot_shap_summary(self, shap_values, X, output_path=None):
-        """Plot and optionally save SHAP summary plot."""
+    def plot_shap_summary(self, shap_values, X, filename='shap_summary.png'):
+        """Plot and save SHAP summary plot."""
         plt.figure(figsize=(10, 6))
         shap.summary_plot(shap_values, X, show=False)
-        if output_path:
-            plt.savefig(output_path)
-        else:
-            plt.show()
+        plt.savefig(filename)
         plt.close()
 
-    def plot_interactive_roc_curve(self, y_true, y_pred_proba, output_path='roc_curve.html'):
+    def plot_interactive_roc_curve(self, y_true, y_pred_proba, filename='roc_curve.html'):
         """Generate an interactive ROC curve using Plotly."""
         n_classes = len(np.unique(y_true))
         fig = go.Figure()
@@ -362,11 +368,11 @@ class EquiMLEvaluation:
                 fig.add_trace(go.Scatter(x=fpr, y=tpr, mode='lines', name=f'Class {i}'))
         fig.add_shape(type='line', line=dict(dash='dash'), x0=0, x1=1, y0=0, y1=1)
         fig.update_layout(title='ROC Curve', xaxis_title='False Positive Rate', yaxis_title='True Positive Rate')
-        fig.write_html(output_path)
+        fig.write_html(filename)
 
-    def generate_evaluation_report(self, metrics, output_path='evaluation_report.txt'):
+    def generate_evaluation_report(self, metrics, filename='evaluation_report.txt'):
         """Generate a comprehensive text report of all evaluation metrics."""
-        with open(output_path, 'w') as f:
+        with open(filename, 'w') as f:
             f.write(f"EquiML Evaluation Report - Generated on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write("="*50 + "\n")
             for category, values in metrics.items():
@@ -376,6 +382,18 @@ class EquiMLEvaluation:
                         f.write(f"  {key}: {val}\n")
                 else:
                     f.write(f"  {category}: {values}\n")
+
+    def generate_report(self, metrics, output_path='evaluation_report.html', template_path='report_template.html'):
+        """
+        Generates a comprehensive HTML report from evaluation metrics.
+
+        Args:
+            metrics (dict): A dictionary containing the evaluation metrics.
+            output_path (str): The path to save the HTML report.
+            template_path (str): The path to the Jinja2 template file.
+        """
+        from .reporting import generate_html_report
+        generate_html_report(metrics, output_path, template_path)
 
 if __name__ == "__main__":
     from sklearn.ensemble import RandomForestClassifier
@@ -395,7 +413,4 @@ if __name__ == "__main__":
     results = evaluator.evaluate(model, X, y, sensitive_features=sensitive, task='classification')
     
     # Generate visualizations and report
-    evaluator.plot_confusion_matrix(y, model.predict(X), output_path='confusion_matrix.png')
-    evaluator.plot_roc_curve(y, model.predict_proba(X), output_path='roc_curve.png')
-    evaluator.plot_interactive_roc_curve(y, model.predict_proba(X), output_path='interactive_roc_curve.html')
-    evaluator.generate_evaluation_report(results, output_path='evaluation_report.txt')
+    evaluator.generate_report(results, output_path='evaluation_report.html')
