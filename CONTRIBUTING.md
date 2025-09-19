@@ -28,11 +28,11 @@ Thank you for your interest in contributing to EquiML, an open-source framework 
 - **Code Review**: Respond to feedback promptly to facilitate merging.
 
 ### 5. Documentation
-- Update documentation in the `docs/` directory for new features or changes.
+- Update the `README.md` and other documentation for new features or changes.
 - Ensure examples in the README or tutorials reflect your updates.
 
 ## Code of Conduct
-We strive to create a welcoming and inclusive community. Please adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) in all interactions.
+We strive to create a welcoming and inclusive community. Please be respectful in all interactions.
 
 ## Questions?
 If you have questions, open an issue or reach out via the [Discussions tab](https://github.com/mkupermann/EquiML/discussions).
