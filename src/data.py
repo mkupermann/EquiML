@@ -6,6 +6,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import PCA
 from scipy import stats
+import arff
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -36,7 +37,7 @@ class Data:
         X_train, X_test, y_train, y_test: Training and testing splits.
     """
     
-    def __init__(self, dataset_path: Optional[str] = None, sensitive_features: Optional[List[str]] = None, text_features: Optional[List[str]] = None, image_features: Optional[List[str]] = None, stopword_language: str = 'english'):
+    def __init__(self, dataset_path: Optional[str] = None, sensitive_features: Optional[List[str]] = None, text_features: Optional[List[str]] = None, image_features: Optional[List[str]] = None):
         """
         Initializes the Data object.
         
@@ -45,13 +46,11 @@ class Data:
             sensitive_features (list, optional): List of sensitive feature names.
             text_features (list, optional): List of text feature names for processing.
             image_features (list, optional): List of image feature names or paths for processing.
-            stopword_language (str): The language for stopwords (default: 'english').
         """
         self.dataset_path = dataset_path
         self.sensitive_features = sensitive_features or []
         self.text_features = text_features or []
         self.image_features = image_features or []
-        self.stopword_language = stopword_language
         self.df = None
         self.X = None
         self.y = None
@@ -59,10 +58,14 @@ class Data:
         self.X_test = None
         self.y_train = None
         self.y_test = None
+        self.sensitive_df = None
+        self.sample_weights = None
+        self.sample_weights_train = None
+        self.sample_weights_test = None
 
     def load_data(self, dataset_path: Optional[str] = None) -> None:
         """
-        Loads the dataset from the specified path. Supports CSV, JSON, and Excel files.
+        Loads the dataset from the specified path. Supports CSV, JSON, Excel, Parquet, and ARFF files.
         
         Args:
             dataset_path (str, optional): Path to the dataset file. If not provided, uses the initialized path.
@@ -82,14 +85,20 @@ class Data:
                 self.df = pd.read_json(self.dataset_path)
             elif self.dataset_path.endswith('.xlsx'):
                 self.df = pd.read_excel(self.dataset_path)
+            elif self.dataset_path.endswith('.parquet'):
+                self.df = pd.read_parquet(self.dataset_path)
+            elif self.dataset_path.endswith('.arff'):
+                with open(self.dataset_path, 'r') as f:
+                    data = arff.load(f)
+                self.df = pd.DataFrame(data['data'], columns=[attr[0] for attr in data['attributes']])
             else:
-                raise ValueError("Unsupported file format. Please use CSV, JSON, or Excel files.")
+                raise ValueError("Unsupported file format. Please use CSV, JSON, Excel, Parquet or ARFF files.")
             logger.info(f"Data loaded successfully from {self.dataset_path}")
         except Exception as e:
             logger.error(f"Failed to load data: {str(e)}")
             raise
 
-    def preprocess(self, target_column: str, numerical_features: Optional[List[str]] = None, categorical_features: Optional[List[str]] = None, impute_strategy: str = 'mean', scaling: str = 'standard', max_text_features: Optional[int] = 100) -> None:
+    def preprocess(self, target_column: str, numerical_features: Optional[List[str]] = None, categorical_features: Optional[List[str]] = None, impute_strategy: str = 'mean', scaling: str = 'standard') -> None:
         """
         Preprocesses the data by handling missing values, encoding categorical variables,
         scaling numerical features, processing text features, and handling image data.
@@ -100,7 +109,6 @@ class Data:
             categorical_features (list, optional): List of categorical feature names.
             impute_strategy (str): Imputation strategy for numerical features ('mean', 'median', 'constant').
             scaling (str): Scaling method for numerical features ('standard', 'minmax', 'robust').
-            max_text_features (int, optional): The maximum number of features for TF-IDF vectorization.
         
         Raises:
             ValueError: If data is not loaded or required columns are missing.
@@ -114,6 +122,9 @@ class Data:
         self.y = pd.Series(le.fit_transform(self.df[target_column]), name=target_column)
         self.X = self.df.drop(columns=[target_column])
         
+        if self.sensitive_features:
+            self.sensitive_df = self.X[self.sensitive_features].copy()
+
         # Handle missing values
         if numerical_features:
             num_imputer = SimpleImputer(strategy=impute_strategy)
@@ -128,9 +139,9 @@ class Data:
                 if feature not in self.X.columns:
                     raise ValueError(f"Text feature '{feature}' not found in dataset.")
                 self.X[feature] = self.X[feature].apply(self._clean_text)
-                vectorizer = TfidfVectorizer(max_features=max_text_features)
-                text_features_array = vectorizer.fit_transform(self.X[feature]).toarray()
-                text_df = pd.DataFrame(text_features_array, columns=[f"{feature}_{i}" for i in range(text_features_array.shape[1])], index=self.X.index)
+                vectorizer = TfidfVectorizer(max_features=100)
+                text_features = vectorizer.fit_transform(self.X[feature]).toarray()
+                text_df = pd.DataFrame(text_features, columns=[f"{feature}_{i}" for i in range(100)], index=self.X.index)
                 self.X = pd.concat([self.X.drop(columns=[feature]), text_df], axis=1)
         
         # Process image features (assuming paths to images are provided)
@@ -178,11 +189,11 @@ class Data:
             text = str(text).lower()
             text = text.translate(str.maketrans('', '', string.punctuation))
             tokens = word_tokenize(text)
-            tokens = [word for word in tokens if word not in stopwords.words(self.stopword_language)]
+            tokens = [word for word in tokens if word not in stopwords.words('english')]
             return ' '.join(tokens)
         except Exception as e:
             logger.error(f"Text cleaning failed: {str(e)}")
-            raise ValueError(f"Text cleaning failed: {str(e)}")
+            return ""
 
     def _process_images(self, image_paths: pd.Series, target_size: Tuple[int, int] = (32, 32)) -> np.ndarray:
         """
@@ -203,10 +214,10 @@ class Data:
                     img_resized = cv2.resize(img, target_size)
                     processed_images.append(img_resized.flatten())
                 else:
-                    raise ValueError(f"Image at path '{path}' could not be read.")
+                    processed_images.append(np.zeros(target_size[0] * target_size[1]))
             except Exception as e:
                 logger.warning(f"Failed to process image '{path}': {str(e)}")
-                raise ValueError(f"Failed to process image '{path}': {str(e)}")
+                processed_images.append(np.zeros(target_size[0] * target_size[1]))
         return np.array(processed_images)
 
     def detect_outliers(self, features: Optional[List[str]] = None, method: str = 'zscore', threshold: float = 3.0, action: str = 'flag') -> Optional[pd.DataFrame]:
@@ -300,6 +311,39 @@ class Data:
         self.X = pd.concat([self.X.drop(columns=numerical_cols), poly_df], axis=1)
         logger.info("Feature engineering completed.")
 
+    def mitigate_bias(self, method='reweighing'):
+        """
+        Applies bias mitigation techniques to the data. Currently supports 'reweighing'.
+
+        Args:
+            method (str): The mitigation method to use.
+        """
+        if method == 'reweighing':
+            if self.y is None or self.sensitive_df is None:
+                raise ValueError("y or sensitive_features not set. Call preprocess() first.")
+
+            self.sample_weights = pd.Series(1.0, index=self.y.index)
+            # Assuming a single sensitive feature for now
+            sensitive_col = self.sensitive_df.columns[0]
+
+            # Calculate weights
+            for y_val in self.y.unique():
+                for s_val in self.sensitive_df[sensitive_col].unique():
+                    y_mask = (self.y == y_val)
+                    s_mask = (self.sensitive_df[sensitive_col] == s_val)
+
+                    p_y = y_mask.mean()
+                    p_s = s_mask.mean()
+                    p_ys = (y_mask & s_mask).mean()
+
+                    weight = (p_y * p_s) / p_ys if p_ys > 0 else 1.0
+
+                    self.sample_weights[y_mask & s_mask] = weight
+
+            logger.info("Sample weights computed using reweighing.")
+        else:
+            raise ValueError(f"Unsupported mitigation method: {method}")
+
     def split_data(self, test_size: float = 0.2, random_state: int = 42) -> None:
         """
         Splits the data into training and testing sets.
@@ -313,9 +357,15 @@ class Data:
         """
         if self.X is None or self.y is None:
             raise ValueError("Data not preprocessed. Call preprocess() first.")
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-            self.X, self.y, test_size=test_size, random_state=random_state
-        )
+
+        if self.sample_weights is not None:
+            self.X_train, self.X_test, self.y_train, self.y_test, self.sample_weights_train, self.sample_weights_test = train_test_split(
+                self.X, self.y, self.sample_weights, test_size=test_size, random_state=random_state
+            )
+        else:
+            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
+                self.X, self.y, test_size=test_size, random_state=random_state
+            )
         logger.info("Data split into training and testing sets.")
 
     def reduce_dimensionality(self, n_components: int = 2, method: str = 'pca') -> None:

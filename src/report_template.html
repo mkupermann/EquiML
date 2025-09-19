@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EquiML Evaluation Report</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        h1, h2, h3 { color: #333; }
+        .metric { background: #f4f4f4; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+        .metric h3 { margin-top: 0; }
+        .plot { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>EquiML Evaluation Report</h1>
+    <p>Generated on: {{ timestamp }}</p>
+
+    <h2>1. Performance Metrics</h2>
+    <div class="metric">
+        <h3>Accuracy</h3>
+        <p>{{ metrics.accuracy | round(4) }}</p>
+    </div>
+    <div class="metric">
+        <h3>Precision</h3>
+        <p>{{ metrics.precision | round(4) }}</p>
+    </div>
+    <div class="metric">
+        <h3>Recall</h3>
+        <p>{{ metrics.recall | round(4) }}</p>
+    </div>
+    <div class="metric">
+        <h3>F1-Score</h3>
+        <p>{{ metrics.f1_score | round(4) }}</p>
+    </div>
+    {% if 'roc_auc' in metrics %}
+    <div class="metric">
+        <h3>ROC AUC</h3>
+        <p>{{ metrics.roc_auc | round(4) }}</p>
+    </div>
+    {% endif %}
+    <div class="plot">
+        <h3>Confusion Matrix</h3>
+        <img src="confusion_matrix.png" alt="Confusion Matrix">
+    </div>
+    {% if 'roc_auc' in metrics %}
+    <div class="plot">
+        <h3>ROC Curve</h3>
+        <img src="roc_curve.png" alt="ROC Curve">
+    </div>
+    {% endif %}
+
+    <h2>2. Fairness Metrics</h2>
+    {% if 'demographic_parity_difference' in metrics %}
+    <div class="metric">
+        <h3>Demographic Parity Difference</h3>
+        <p>{{ metrics.demographic_parity_difference | round(4) }}</p>
+    </div>
+    {% endif %}
+    {% if 'equalized_odds_difference' in metrics %}
+    <div class="metric">
+        <h3>Equalized Odds Difference</h3>
+        <p>{{ metrics.equalized_odds_difference | round(4) }}</p>
+    </div>
+    {% endif %}
+    {% if 'equal_opportunity_difference' in metrics %}
+    <div class="metric">
+        <h3>Equal Opportunity Difference</h3>
+        <p>{{ metrics.equal_opportunity_difference | round(4) }}</p>
+    </div>
+    {% endif %}
+    <div class="plot">
+        <h3>Fairness Metrics Comparison</h3>
+        <img src="fairness_metrics.png" alt="Fairness Metrics">
+    </div>
+
+    <h2>3. Robustness Metrics</h2>
+    {% if 'robustness' in metrics %}
+    <div class="metric">
+        <h3>Cross-Validation Mean Accuracy</h3>
+        <p>{{ metrics.robustness.cv_mean | round(4) }}</p>
+    </div>
+    <div class="metric">
+        <h3>Cross-Validation Std Dev</h3>
+        <p>{{ metrics.robustness.cv_std | round(4) }}</p>
+    </div>
+    <div class="metric">
+        <h3>Noise Sensitivity</h3>
+        <p>{{ metrics.robustness.noise_sensitivity | round(4) }}</p>
+    </div>
+    {% endif %}
+
+    <h2>4. Interpretability</h2>
+    {% if 'interpretability' in metrics %}
+    <div class="plot">
+        <h3>Feature Importance</h3>
+        <img src="feature_importance.png" alt="Feature Importance">
+    </div>
+    <div class="plot">
+        <h3>SHAP Summary</h3>
+        <img src="shap_summary.png" alt="SHAP Summary">
+    </div>
+    {% endif %}
+
+    <h2>5. Recommendations</h2>
+    <div class="metric">
+        <p>
+            Based on the evaluation results, here are some recommendations:
+            <ul>
+                {% if metrics.f1_score < 0.7 %}
+                <li>The model's F1-score is low. Consider trying different algorithms or feature engineering.</li>
+                {% endif %}
+                {% if 'demographic_parity_difference' in metrics and metrics.demographic_parity_difference > 0.1 %}
+                <li>The model shows signs of bias. Consider using fairness mitigation techniques like reweighing or adversarial debiasing.</li>
+                {% endif %}
+                {% if 'robustness' in metrics and metrics.robustness.cv_std > 0.1 %}
+                <li>The model's performance varies significantly across cross-validation folds. The model might be unstable.</li>
+                {% endif %}
+            </ul>
+        </p>
+    </div>
+
+</body>
+</html>
