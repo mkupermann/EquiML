@@ -15,7 +15,7 @@ For example:
 
 This process involves feeding data into an algorithm, which then "trains" a model to make predictions.
 
-### Why Fairness Matters
+### Why Fairness Matters 
 While ML is powerful, it can sometimes make unfair decisions if the data it learns from contains biases. For instance, if a model used to approve loans learns from historical data where certain groups were unfairly denied, it might continue that pattern, rejecting people based on race, gender, or other sensitive traits.
 
 **Equitable and responsible machine learning** ensures that models treat everyone fairly. EquiML is a tool that helps you detect and reduce bias, making your models more just and trustworthy.
