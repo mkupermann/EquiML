@@ -174,7 +174,7 @@ EquiML is released under the **[MIT License](https://github.com/mkupermann/EquiM
 
 ## Contact
 - **GitHub Issues**: Report bugs or request features at [GitHub Issues](https://github.com/mkupermann/EquiML/issues).
-- **Email**: Contact the maintainer at [mkupermann@example.com](mailto:michael@kupermann.com).
+- **Email**: Contact the maintainer at [mkupermann@kupermann.com](mailto:michael@kupermann.com).
 - **Discussions**: Join the conversation at [GitHub Discussions](https://github.com/mkupermann/EquiML/discussions).
 
 ## Roadmap
