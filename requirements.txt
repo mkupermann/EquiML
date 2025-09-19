@@ -26,3 +26,4 @@ coverage
 pyarrow
 openpyxl
 liac-arff
+pytroch
