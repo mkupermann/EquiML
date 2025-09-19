@@ -8,7 +8,6 @@ EquiML is an open-source Python framework designed to empower developers to crea
 
 ## Here’s how EquiML makes a difference
 
-
 - **Promoting Fairness**...
   EquiML includes tools to detect and reduce biases in AI models. For example, it can enforce rules like demographic parity, ensuring that the model treats people from different groups—say, based on gender or race—equally.    This helps prevent AI from reinforcing unfair societal patterns, making outcomes more just for everyone.
 - **Increasing Transparency**...
@@ -37,54 +36,18 @@ The framework is still under development and welcomes contributions to evolve in
 
 ## Key Features
 EquiML provides a robust set of tools:
-- **Bias Detection and Mitigation**: Identify and reduce biases in datasets using advanced statistical methods.
+- **Flexible Data Loading**: Load data from various formats including CSV, JSON, Excel, Parquet, and ARFF.
+- **Advanced Preprocessing**: A rich suite of preprocessing tools including outlier detection, feature engineering, and support for multi-modal data (text and images).
+- **Bias Detection and Mitigation**: Identify and reduce biases in datasets using techniques like reweighing.
 - **Fair Model Training**: Train models with fairness constraints like demographic parity and equalized odds, leveraging libraries like Fairlearn.
-- **Comprehensive Evaluation**: Assess model performance (accuracy, F1-score, ROC-AUC) and fairness metrics across demographic groups.
+- **Expanded Algorithm Support**: Train models using Logistic Regression, Random Forest, XGBoost, and LightGBM.
+- **Hyperparameter Tuning**: Automatically tune model hyperparameters using Optuna for optimal performance.
+- **Comprehensive Evaluation**: Assess model performance (accuracy, F1-score, ROC-AUC), fairness metrics (demographic parity, equalized odds, equal opportunity), robustness, and interpretability.
 - **Model Explainability**: SHAP and LIME to understand feature contributions and model decisions.
-- **Data Visualization**: intuitive plots for bias, fairness, and performance metrics using Matplotlib, Seaborn, and Plotly.
+- **Rich Visualizations**: Generate a wide range of plots for bias, fairness, and performance metrics, including model comparison plots and interactive plots with Plotly.
+- **Automated Reporting**: Generate comprehensive HTML reports with visualizations and recommendations.
 - **User-Friendly Interface**: A Streamlit dashboard enables non-technical users to interact with the framework.
 - **Extensibility**: Open-source architecture allows easy addition of new algorithms, metrics, or visualizations.
-- **Robustness and Monitoring**: Tools for data drift detection, noise sensitivity analysis, and performance monitoring.
-- **Deployment Readiness**: Export models to ONNX format for cross-platform compatibility.
-
-## Supported Data Types
-EquiML supports a variety of data types to facilitate equitable and responsible machine learning, including numerical, categorical, text, and image data. Below is an overview of how text and image data are processed:
-Text Data
-Text data is processed through the Data class in data.py. The framework:
-
-Cleans text by converting to lowercase, removing punctuation, and eliminating stopwords using NLTK.
-Transforms text into numerical features using TF-IDF vectorization (limited to 100 features) via scikit-learn's TfidfVectorizer.
-Integrates these features into the dataset for model training.
-
-Example Usage:
-```python
-from equiml import Data
-import pandas as pd
-```
-### Sample dataset with a text column
-```python
-data = pd.DataFrame({'text_col': ['This is a sample text', 'Another text example']})
-equiml_data =  = Data(data, text_features=['text_col'])
-equiml_data.preprocess()
-```
-### Image Data
-Image data is processed by loading images from file paths, resizing them to 32x32 pixels in grayscale, and flattening them into numerical arrays using OpenCV. These arrays are then integrated into the dataset.
-Example Usage:
-
-```python
-from equiml import Data
-import pandas as pd
-```
-
-### Sample dataset with image paths
-```python
-data = pd.DataFrame({'image_col': ['path/to/image1.jpg', 'path/to/image2.jpg']})
-equiml_data = Data(data, image_features=['image_col'])
-equiml_data.preprocess()
-```
-
-For detailed tutorials, see the Examples section.
-
 
 ## Installation
 Follow these steps to set up EquiML on your local machine.
@@ -124,7 +87,7 @@ Follow these steps to set up EquiML on your local machine.
 
 5. **Verify Installation**:
    ```python
-   import equiml
+   from src.data import Data
    print("EquiML is ready!")
    ```
 
@@ -132,30 +95,45 @@ Follow these steps to set up EquiML on your local machine.
 Here’s a simple example using the Adult Income dataset to predict income fairly across gender:
 
 ```python
-from equiml import Data, Model, Evaluation
+from src.data import Data
+from src.model import Model
+from src.evaluation import EquiMLEvaluation
+import pandas as pd
 
 # Load and preprocess data
-data = Data(sensitive_features=['sex'])
-data.load_data('adult.csv')
-data.preprocess(target_column='income')
+data = Data(dataset_path='tests/adult.csv', sensitive_features=['sex'])
+data.load_data()
+data.preprocess(
+    target_column='income',
+    numerical_features=['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss', 'hours-per-week'],
+    categorical_features=['workclass', 'education', 'marital-status', 'occupation', 'relationship', 'race', 'sex', 'native-country']
+)
+data.split_data()
+
+# The sensitive feature 'sex' is one-hot encoded. Let's find the column name.
+sensitive_feature_column = [col for col in data.X_train.columns if col.startswith('sex_')][0]
+sensitive_features_train = data.X_train[sensitive_feature_column]
+X_train = data.X_train.drop(columns=[sensitive_feature_column])
+sensitive_features_test = data.X_test[sensitive_feature_column]
+X_test = data.X_test.drop(columns=[sensitive_feature_column])
 
 # Train a fair model
 model = Model(algorithm='logistic_regression', fairness_constraint='demographic_parity')
-model.train(data.X_train, data.y_train, sensitive_features=data.X_train[['sex_Female']])
+model.train(X_train, data.y_train, sensitive_features=sensitive_features_train)
 
 # Evaluate fairness and performance
-evaluation = Evaluation(model, data.X_test, data.y_test, sensitive_features=data.X_test[['sex_Female']])
-metrics = evaluation.evaluate()
+evaluation = EquiMLEvaluation()
+metrics = evaluation.evaluate(model, X_test, data.y_test, sensitive_features=sensitive_features_test)
 print(metrics)
 
-# Visualize fairness metrics
-evaluation.plot_fairness_metrics('selection_rate')
+# Generate a report
+evaluation.generate_report(metrics, output_path='evaluation_report.html', template_path='src/report_template.html')
 ```
 
-This code demonstrates loading data, training a fair model, evaluating performance, and visualizing fairness metrics.
+This code demonstrates loading data, training a fair model, evaluating performance, and generating a comprehensive HTML report.
 
 ## Tutorial for Beginners
-New to machine learning or fairness? Our **[Beginner’s Tutorial](https://github.com/mkupermann/EquiML/blob/main/tests/Test%20and%20Try%20User_Guide.markdown)** guides you through using EquiML with the Adult Income dataset. It covers:
+New to machine learning or fairness? Our **[Beginner’s Tutorial](https://github.com/mkupermann/EquiML/blob/main/Beginners_Tutorial_for_Using_EquiML.md)** guides you through using EquiML with the Adult Income dataset. It covers:
 - Basics of machine learning and fairness.
 - Setting up EquiML.
 - Loading and preprocessing data.
@@ -169,11 +147,10 @@ EquiML’s `src` directory contains the core modules:
 - **`data.py`**: Handles data loading, preprocessing, bias detection, and mitigation.
 - **`model.py`**: Manages model training, fairness constraints, explainability, and deployment.
 - **`evaluation.py`**: Computes performance, fairness, robustness, and interpretability metrics.
-- **`visualization.py`**: Provides tools for visualizing fairness and performance metrics.
-- **`app.py`**: Implements a Streamlit dashboard for interactive use.
+- **`reporting.py`**: Generates HTML reports from evaluation metrics.
+- **`streamlit_app.py`**: Implements a Streamlit dashboard for interactive use.
 
 Additional directories:
-- **`docs/`**: Contains tutorials and API documentation.
 - **`tests/`**: Includes unit tests for ensuring reliability.
 
 ## Contributing
@@ -202,11 +179,11 @@ EquiML is released under the **[MIT License](https://github.com/mkupermann/EquiM
 
 ## Roadmap
 EquiML is actively developing the following features:
-- **Advanced Algorithms**: Support for neural networks and gradient boosting.
-- **Enhanced Fairness Metrics**: Add calibration and disparate impact metrics.
-- **Improved Data Handling**: Tools for missing data and imbalanced datasets.
-- **Comprehensive Testing**: Expand unit tests for robustness.
-- **Interactive Visualizations**: Enhance the Streamlit dashboard with dynamic plots.
+- **Enhanced Fairness Metrics**: Add more fairness metrics and visualizations.
+- **Advanced Bias Mitigation**: Implement more pre-processing and post-processing bias mitigation techniques.
+- **Improved Data Handling**: Tools for handling imbalanced datasets.
+- **Comprehensive Testing**: Continue to expand unit and integration tests.
+- **Interactive Visualizations**: Enhance the Streamlit dashboard with more dynamic plots.
 - **Community Engagement**: Foster collaboration through forums and conferences.
 
 Join us in building a future where AI is equitable and responsible!
