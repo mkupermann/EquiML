@@ -35,19 +35,48 @@ EquiML addresses the urgent need for ethical AI by providing a comprehensive too
 The framework is still under development and welcomes contributions to evolve into a practical toolset for responsible AI.
 
 ## Key Features
-EquiML provides a robust set of tools:
+EquiML provides a comprehensive set of responsible AI tools:
+
+### **Core Capabilities**
 - **Flexible Data Loading**: Load data from various formats including CSV, JSON, Excel, Parquet, and ARFF.
-- **Advanced Preprocessing**: A rich suite of preprocessing tools including outlier detection, feature engineering, and support for multi-modal data (text and images).
-- **Bias Detection and Mitigation**: Identify and reduce biases in datasets using techniques like reweighing.
-- **Fair Model Training**: Train models with fairness constraints like demographic parity and equalized odds, leveraging libraries like Fairlearn.
-- **Expanded Algorithm Support**: Train models using Logistic Regression, Random Forest, XGBoost, and LightGBM.
-- **Hyperparameter Tuning**: Automatically tune model hyperparameters using Optuna for optimal performance.
-- **Comprehensive Evaluation**: Assess model performance (accuracy, F1-score, ROC-AUC), fairness metrics (demographic parity, equalized odds, equal opportunity), robustness, and interpretability.
-- **Model Explainability**: SHAP and LIME to understand feature contributions and model decisions.
-- **Rich Visualizations**: Generate a wide range of plots for bias, fairness, and performance metrics, including model comparison plots and interactive plots with Plotly.
-- **Automated Reporting**: Generate comprehensive HTML reports with visualizations and recommendations.
-- **User-Friendly Interface**: A Streamlit dashboard enables non-technical users to interact with the framework.
-- **Extensibility**: Open-source architecture allows easy addition of new algorithms, metrics, or visualizations.
+- **Advanced Preprocessing**: Rich preprocessing tools including outlier detection, feature engineering, and support for multi-modal data (text and images).
+- **Comprehensive Bias Detection**: Identify and analyze biases across multiple dimensions with detailed reporting.
+
+### **Bias Mitigation & Fairness**
+- **Advanced Bias Mitigation**: Multiple preprocessing techniques including reweighing, correlation removal, and data augmentation.
+- **Fair Model Training**: Train models with fairness constraints like demographic parity and equalized odds.
+- **Post-Processing Fairness**: Threshold optimization and calibration techniques for fairness adjustment.
+- **Class Imbalance Handling**: SMOTE, random sampling, and class weighting methods.
+
+### **Enhanced Algorithm Support**
+- **Traditional Algorithms**: Logistic Regression with L1/L2/ElasticNet regularization, Random Forest, XGBoost, LightGBM.
+- **Robust Variants**: Enhanced algorithms with stability improvements (robust_random_forest, robust_xgboost, robust_ensemble).
+- **Ensemble Methods**: Voting classifiers, bagging, and diverse estimator combinations for improved robustness.
+- **Hyperparameter Tuning**: Automated optimization using Optuna, GridSearchCV, and RandomSearchCV.
+
+### **Model Stability & Robustness**
+- **Stability Improvements**: Comprehensive methods to reduce model variance and improve reliability.
+- **Data Leakage Detection**: Automatic detection of potential data leakage and temporal dependencies.
+- **Stratified Cross-Validation**: Enhanced validation techniques for stable performance assessment.
+- **Model Complexity Reduction**: Automatic complexity adjustment based on dataset characteristics.
+
+### **Monitoring & Governance**
+- **Real-Time Bias Monitoring**: Continuous monitoring of model predictions for bias violations.
+- **Data Drift Detection**: Statistical detection of data distribution changes over time.
+- **Automated Alerting**: Priority-based alert system for bias violations and performance degradation.
+- **Audit Trails**: Comprehensive logging and monitoring history export capabilities.
+
+### **Evaluation & Reporting**
+- **Comprehensive Evaluation**: Performance, fairness, robustness, and interpretability metrics.
+- **Model Explainability**: SHAP and LIME integration for decision transparency.
+- **Enhanced Reporting**: Detailed HTML reports with priority-coded recommendations and executable code examples.
+- **Rich Visualizations**: Interactive plots with Plotly, comprehensive fairness visualizations.
+
+### **User Experience**
+- **Streamlit Dashboard**: Interactive interface for non-technical users.
+- **Detailed Documentation**: Complete beginner's guides and LLM development tutorials.
+- **Professional Configuration**: Linting, type checking, and development tool integration.
+- **Extensibility**: Open-source architecture for easy customization and extension.
 
 ## Installation
 Follow these steps to set up EquiML on your local machine.
@@ -92,15 +121,17 @@ Follow these steps to set up EquiML on your local machine.
    ```
 
 ## Quick Start
-Here’s a simple example using the Adult Income dataset to predict income fairly across gender:
+Here's an enhanced example using the Adult Income dataset with EquiML's latest capabilities:
 
+### **Basic Fair Model Training**
 ```python
 from src.data import Data
 from src.model import Model
 from src.evaluation import EquiMLEvaluation
+from src.monitoring import BiasMonitor
 import pandas as pd
 
-# Load and preprocess data
+# Load and preprocess data with bias mitigation
 data = Data(dataset_path='tests/adult.csv', sensitive_features=['sex'])
 data.load_data()
 data.preprocess(
@@ -108,50 +139,116 @@ data.preprocess(
     numerical_features=['age', 'fnlwgt', 'education-num', 'capital-gain', 'capital-loss', 'hours-per-week'],
     categorical_features=['workclass', 'education', 'marital-status', 'occupation', 'relationship', 'race', 'sex', 'native-country']
 )
+
+# Apply enhanced bias mitigation and class imbalance handling
+data.apply_bias_mitigation(method='reweighing')
+data.handle_class_imbalance(method='class_weights')
 data.split_data()
 
-# The sensitive feature 'sex' is one-hot encoded. Let's find the column name.
+# Prepare features
 sensitive_feature_column = [col for col in data.X_train.columns if col.startswith('sex_')][0]
 sensitive_features_train = data.X_train[sensitive_feature_column]
 X_train = data.X_train.drop(columns=[sensitive_feature_column])
 sensitive_features_test = data.X_test[sensitive_feature_column]
 X_test = data.X_test.drop(columns=[sensitive_feature_column])
 
-# Train a fair model
-model = Model(algorithm='logistic_regression', fairness_constraint='demographic_parity')
+# Train enhanced robust model with stability improvements
+model = Model(algorithm='robust_random_forest', fairness_constraint='demographic_parity')
+model.apply_stability_improvements(X_train, data.y_train, sensitive_features_train)
 model.train(X_train, data.y_train, sensitive_features=sensitive_features_train)
 
-# Evaluate fairness and performance
+# Comprehensive evaluation with monitoring
 evaluation = EquiMLEvaluation()
-metrics = evaluation.evaluate(model, X_test, data.y_test, sensitive_features=sensitive_features_test)
-print(metrics)
+predictions = model.predict(X_test)
+metrics = evaluation.evaluate(model, X_test, data.y_test, y_pred=predictions, sensitive_features=sensitive_features_test)
 
-# Generate a report
-evaluation.generate_report(metrics, output_path='evaluation_report.html', template_path='src/report_template.html')
+# Set up real-time bias monitoring
+monitor = BiasMonitor(sensitive_features=['sex'])
+monitoring_result = monitor.monitor_predictions(
+    predictions,
+    pd.DataFrame({sensitive_feature_column: sensitive_features_test}),
+    data.y_test.values
+)
+
+# Generate enhanced report with detailed recommendations
+evaluation.generate_report(metrics, output_path='enhanced_evaluation_report.html', template_path='src/report_template.html')
+
+print(f"Model Accuracy: {metrics['accuracy']:.1%}")
+print(f"Bias Level: {abs(metrics.get('demographic_parity_difference', 0)):.1%}")
+print(f"Bias Violations: {len(monitoring_result['violations'])}")
 ```
 
-This code demonstrates loading data, training a fair model, evaluating performance, and generating a comprehensive HTML report.
+### **Advanced Usage with All Features**
+```python
+# For maximum robustness and fairness
+model = Model(algorithm='robust_ensemble', fairness_constraint='equalized_odds')
 
-## Tutorial for Beginners
-New to machine learning or fairness? Our **[Beginner’s Tutorial](https://github.com/mkupermann/EquiML/blob/main/Beginners_Tutorial_for_Using_EquiML.md)** guides you through using EquiML with the Adult Income dataset. It covers:
-- Basics of machine learning and fairness.
-- Setting up EquiML.
-- Loading and preprocessing data.
-- Training a fair model.
-- Evaluating and visualizing results.
+# Tune hyperparameters automatically
+model.tune_hyperparameters(method='optuna', n_trials=50)
 
-The tutorial is designed for absolute beginners, ensuring you understand each step.
+# Apply comprehensive stability improvements
+model.apply_stability_improvements(X_train, data.y_train, stability_method='comprehensive')
+
+# Check for data quality issues
+leakage_results = model.check_data_leakage(X_train, X_test)
+stability_metrics = model.evaluate_model_stability(X_train, data.y_train)
+
+# Deploy with post-processing fairness adjustments
+fair_predictions = model.apply_fairness_postprocessing(X_test, sensitive_features_test)
+```
+
+This demonstrates EquiML's complete pipeline: enhanced preprocessing, robust training, comprehensive evaluation, real-time monitoring, and detailed actionable reporting.
+
+## Comprehensive Tutorials
+EquiML provides detailed guides for different learning paths:
+
+### **For Complete Beginners**
+**[Complete Beginner's Guide to EquiML](Complete_Beginners_Guide_to_EquiML.md)** - A comprehensive 1,000+ line guide covering:
+- What EquiML does in simple terms with real-world examples
+- Step-by-step installation for all operating systems
+- Your first fair AI model with copy-paste ready code
+- Understanding results and metrics
+- Advanced features and real-world applications
+- 4-week structured learning path
+- Common problems and solutions
+
+### **For LLM Development**
+**[Complete Guide to Building Fair LLMs with EquiML](Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md)** - A comprehensive guide for building responsible Large Language Models:
+- Understanding LLMs vs traditional ML
+- 6-phase fair LLM development framework
+- Bias detection and mitigation for text generation
+- Production-scale LLM training considerations
+- Real-time monitoring for language models
+- Complete code examples for fair LLM development
+
+### **Original Tutorial**
+**[Beginner's Tutorial](Beginners_Tutorial_for_Using_EquiML.md)** - The original tutorial covering basic EquiML usage.
 
 ## Project Structure
-EquiML’s `src` directory contains the core modules:
-- **`data.py`**: Handles data loading, preprocessing, bias detection, and mitigation.
-- **`model.py`**: Manages model training, fairness constraints, explainability, and deployment.
-- **`evaluation.py`**: Computes performance, fairness, robustness, and interpretability metrics.
-- **`reporting.py`**: Generates HTML reports from evaluation metrics.
-- **`streamlit_app.py`**: Implements a Streamlit dashboard for interactive use.
+EquiML's enhanced architecture includes:
 
-Additional directories:
-- **`tests/`**: Includes unit tests for ensuring reliability.
+### **Core Modules (`src/` directory)**
+- **`data.py`**: Enhanced data handling with bias mitigation, class imbalance handling, and multi-modal support.
+- **`model.py`**: Advanced model training with robust algorithms, stability improvements, hyperparameter tuning, and fairness constraints.
+- **`evaluation.py`**: Comprehensive evaluation including performance, fairness, robustness, and interpretability metrics.
+- **`reporting.py`**: Enhanced HTML report generation with detailed recommendations and actionable code examples.
+- **`monitoring.py`**: Real-time bias monitoring, data drift detection, and automated alerting systems.
+- **`visualization.py`**: Rich visualizations for bias analysis, fairness metrics, and performance assessment.
+- **`streamlit_app.py`**: Interactive dashboard for non-technical users.
+
+### **Configuration Files**
+- **`pyproject.toml`**: Modern Python project configuration with linting and type checking.
+- **`.flake8`**: Code quality and style configuration.
+- **`mypy.ini`**: Type checking configuration for improved code quality.
+
+### **Documentation**
+- **`Complete_Beginners_Guide_to_EquiML.md`**: Comprehensive guide for traditional ML with EquiML.
+- **`Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md`**: Complete guide for fair Large Language Model development.
+- **`Beginners_Tutorial_for_Using_EquiML.md`**: Original tutorial for basic usage.
+
+### **Testing & Examples**
+- **`tests/`**: Unit tests, sample datasets (adult.csv), and test utilities.
+- **Example reports**: Multiple HTML reports demonstrating different use cases and features.
 
 ## Contributing
 We welcome contributions to make EquiML a leading tool for responsible AI. To contribute:
@@ -177,13 +274,30 @@ EquiML is released under the **[MIT License](https://github.com/mkupermann/EquiM
 - **Email**: Contact the maintainer at [mkupermann@kupermann.com](mailto:michael@kupermann.com).
 - **Discussions**: Join the conversation at [GitHub Discussions](https://github.com/mkupermann/EquiML/discussions).
 
-## Roadmap
-EquiML is actively developing the following features:
-- **Enhanced Fairness Metrics**: Add more fairness metrics and visualizations.
-- **Advanced Bias Mitigation**: Implement more pre-processing and post-processing bias mitigation techniques.
-- **Improved Data Handling**: Tools for handling imbalanced datasets.
-- **Comprehensive Testing**: Continue to expand unit and integration tests.
-- **Interactive Visualizations**: Enhance the Streamlit dashboard with more dynamic plots.
-- **Community Engagement**: Foster collaboration through forums and conferences.
+## Recent Enhancements & Roadmap
+
+### **Recently Completed (Latest Version)**
+- **Enhanced Bias Mitigation**: Implemented comprehensive preprocessing techniques (reweighing, correlation removal, data augmentation).
+- **Advanced Algorithm Support**: Added robust algorithm variants with stability improvements and ensemble methods.
+- **Real-Time Monitoring**: Built-in bias monitoring and data drift detection with automated alerting.
+- **Stability Improvements**: Comprehensive model stability enhancements including regularization, complexity reduction, and cross-validation.
+- **Enhanced Reporting**: Detailed HTML reports with priority-coded recommendations and executable code examples.
+- **Class Imbalance Handling**: SMOTE, random sampling, and class weighting implementations.
+- **Professional Configuration**: Added linting, type checking, and development tool integration.
+- **Comprehensive Documentation**: Complete guides for both traditional ML and LLM development.
+
+### **Current Development Focus**
+- **Large Language Model Support**: Expanding fairness framework for LLM development and evaluation.
+- **Advanced Fairness Metrics**: Additional fairness metrics and sophisticated bias detection algorithms.
+- **Production Deployment Tools**: Enhanced deployment pipelines with comprehensive monitoring.
+- **Community Integrations**: Integration with popular ML platforms and cloud services.
+- **Performance Optimization**: Speed and memory optimizations for large-scale deployments.
+
+### **Future Roadmap**
+- **Federated Learning Support**: Fair ML across distributed datasets.
+- **Automated Bias Remediation**: AI-powered bias detection and automatic correction.
+- **Regulatory Compliance**: Built-in compliance checking for AI regulations (EU AI Act, etc.).
+- **Advanced Interpretability**: Next-generation explainability techniques.
+- **Community Platform**: Collaboration tools and shared fairness benchmarks.
 
 Join us in building a future where AI is equitable and responsible!
