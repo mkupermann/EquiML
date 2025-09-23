@@ -138,7 +138,7 @@ Phase 6: Deployment with Safeguards
 
 ## Prerequisites and Setup
 
-### ** Technical Requirements**
+### **Technical Requirements**
 
 #### **Hardware Requirements**
 - **GPU**: NVIDIA GPU with at least 16GB VRAM (RTX 3090, RTX 4090, or better)
@@ -195,7 +195,7 @@ pip install tensorboard     # Training visualization
 
 ## Phase 1: Data Collection and Preparation
 
-### ** Understanding LLM Training Data**
+### **Understanding LLM Training Data**
 
 #### **Types of Data You Need**
 
@@ -214,7 +214,7 @@ pip install tensorboard     # Training visualization
    - Bias evaluation datasets
    - Safety and toxicity test cases
 
-### ** Step 1: Create Fair Training Data**
+### **Step 1: Create Fair Training Data**
 
 ```python
 import sys
@@ -373,7 +373,7 @@ print(f" Final dataset size: {len(training_dataset)}")
 print(f" Bias analysis: {bias_analysis}")
 ```
 
-### ** Step 2: Implement Fair Text Generation**
+### **Step 2: Implement Fair Text Generation**
 
 ```python
 from transformers import (
@@ -569,7 +569,7 @@ model, tokenizer = fair_trainer.initialize_model()
 print(" Fair LLM trainer initialized!")
 ```
 
-### ** Step 3: Prepare LLM Training Data**
+### **Step 3: Prepare LLM Training Data**
 
 ```python
 def create_fair_llm_dataset():
@@ -643,7 +643,7 @@ print(" Fair LLM training data prepared!")
 
 ## Phase 2: Bias Detection and Mitigation
 
-### ** Step 4: Implement Bias Detection for LLMs**
+### **Step 4: Implement Bias Detection for LLMs**
 
 ```python
 class LLMBiasDetector:
@@ -771,7 +771,7 @@ for bias_type, results in bias_results.items():
         print(f"       {bias_type} bias within acceptable range")
 ```
 
-### ** Step 5: Apply Bias Mitigation During Training**
+### **Step 5: Apply Bias Mitigation During Training**
 
 ```python
 class FairLLMLoss:
@@ -830,7 +830,7 @@ print(" Fairness-aware training setup completed!")
 
 ## Phase 3: Model Architecture and Training
 
-### ** Step 6: Design Fair LLM Architecture**
+### **Step 6: Design Fair LLM Architecture**
 
 ```python
 def create_fair_llm_architecture(base_model_name='gpt2', fairness_modules=True):
@@ -862,7 +862,7 @@ fair_model, fair_config = create_fair_llm_architecture()
 print(f"📐 Model parameters: {fair_model.num_parameters():,}")
 ```
 
-### ** Step 7: Implement Fair Training Process**
+### **Step 7: Implement Fair Training Process**
 
 ```python
 def train_fair_llm_complete():
@@ -968,7 +968,7 @@ print(" For production use, consider cloud platforms or pre-trained models with 
 
 ## Phase 4: Fairness-Aware Fine-Tuning
 
-### ** Step 8: Fine-Tune for Specific Tasks**
+### **Step 8: Fine-Tune for Specific Tasks**
 
 ```python
 def create_fair_instruction_dataset():
@@ -1077,7 +1077,7 @@ print(" Fine-tuning pipeline ready for execution")
 
 ## Phase 5: Evaluation and Monitoring
 
-### ** Step 9: Comprehensive LLM Evaluation**
+### **Step 9: Comprehensive LLM Evaluation**
 
 ```python
 class FairLLMEvaluator:
@@ -1382,7 +1382,7 @@ print("\n LLM evaluation pipeline successfully demonstrated!")
 
 ## Phase 6: Deployment with Safeguards
 
-### ** Step 10: Deploy Your Fair LLM**
+### **Step 10: Deploy Your Fair LLM**
 
 ```python
 class FairLLMDeployment:
@@ -1542,7 +1542,7 @@ print(" Fair LLM deployment pipeline demonstrated!")
 
 ## Complete Step-by-Step LLM Creation Process
 
-### ** Your Complete Fair LLM Development Workflow**
+### **Your Complete Fair LLM Development Workflow**
 
 ```python
 def create_complete_fair_llm():
@@ -1656,7 +1656,7 @@ print("   4. Scale up with larger models and data")
 
 ## Production LLM Development
 
-### ** Scaling to Production-Grade LLMs**
+### **Scaling to Production-Grade LLMs**
 
 #### **For Serious LLM Development:**
 
@@ -1687,7 +1687,7 @@ FINE_TUNING_CONFIG = {
 3. **Apply bias mitigation** during fine-tuning
 4. **Deploy with comprehensive monitoring**
 
-### ** Complete Production Example**
+### **Complete Production Example**
 
 ```python
 def create_production_fair_llm():
@@ -1840,7 +1840,7 @@ print(f"   Budget: {production_plan['budget_estimate']}")
 
 ## Key Takeaways for Fair LLM Development
 
-### ** Essential Steps You Must Follow:**
+### **Essential Steps You Must Follow:**
 
 1. ** Data Curation**: Use diverse, balanced, bias-free training data
 2. ** Fairness Integration**: Apply fairness constraints throughout training
@@ -1848,7 +1848,7 @@ print(f"   Budget: {production_plan['budget_estimate']}")
 4. ** Safety Measures**: Implement comprehensive safety filters
 5. ** Iterative Improvement**: Continuously improve based on monitoring
 
-### ** Common Mistakes to Avoid:**
+### **Common Mistakes to Avoid:**
 
 -  Using biased training data without analysis
 -  Ignoring fairness during training (only checking at the end)
@@ -1856,7 +1856,7 @@ print(f"   Budget: {production_plan['budget_estimate']}")
 -  Deploying without real-time bias monitoring
 -  Forgetting to plan for continuous improvement
 
-### ** EquiML's Advantages for LLM Development:**
+### **EquiML's Advantages for LLM Development:**
 
 -  **Built-in bias detection** and mitigation tools
 -  **Comprehensive evaluation** frameworks
@@ -1868,7 +1868,7 @@ print(f"   Budget: {production_plan['budget_estimate']}")
 
 ## Final Notes
 
-### ** Learning Path for Fair LLM Development**
+### **Learning Path for Fair LLM Development**
 
 1. **Month 1**: Master EquiML basics with traditional ML
 2. **Month 2**: Understand LLM fundamentals and architecture
