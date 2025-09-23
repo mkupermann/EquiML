@@ -128,11 +128,11 @@ Phase 6: Deployment with Safeguards
 
 ### **EquiML's Fair LLM Principles**
 
-1. ** Bias-Aware Data Curation**: Carefully curate training data to minimize bias
-2. ** Fairness-Constrained Training**: Apply fairness constraints during model training
-3. ** Real-Time Bias Monitoring**: Continuously monitor for emerging bias
-4. ** Transparent Evaluation**: Provide detailed fairness metrics and explanations
-5. ** Iterative Improvement**: Continuously improve fairness based on monitoring results
+1. **Bias-Aware Data Curation**: Carefully curate training data to minimize bias
+2. **Fairness-Constrained Training**: Apply fairness constraints during model training
+3. **Real-Time Bias Monitoring**: Continuously monitor for emerging bias
+4. **Transparent Evaluation**: Provide detailed fairness metrics and explanations
+5. **Iterative Improvement**: Continuously improve fairness based on monitoring results
 
 ---
 
