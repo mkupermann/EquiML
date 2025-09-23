@@ -15,11 +15,26 @@ import cv2  # For image data support
 import logging
 from typing import List, Optional, Tuple, Union
 
-nltk.download('punkt')
-nltk.download('stopwords')
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def _setup_nltk():
+    """
+    Setup NLTK data downloads if not already present.
+    This function should be called before using text processing features.
+    """
+    try:
+        import nltk
+        nltk.data.find('tokenizers/punkt')
+        nltk.data.find('corpora/stopwords')
+    except LookupError:
+        logger.info("Downloading required NLTK data...")
+        try:
+            nltk.download('punkt', quiet=True)
+            nltk.download('stopwords', quiet=True)
+            logger.info("NLTK data download completed.")
+        except Exception as e:
+            logger.warning(f"Failed to download NLTK data: {e}. Text processing may not work properly.")
 
 class Data:
     """
@@ -178,14 +193,15 @@ class Data:
     def _clean_text(self, text: str) -> str:
         """
         Helper function to clean text data.
-        
+
         Args:
             text (str): Raw text input.
-        
+
         Returns:
             str: Cleaned text.
         """
         try:
+            _setup_nltk()  # Ensure NLTK data is available
             text = str(text).lower()
             text = text.translate(str.maketrans('', '', string.punctuation))
             tokens = word_tokenize(text)

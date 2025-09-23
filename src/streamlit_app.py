@@ -33,3 +33,17 @@ if uploaded_file:
             sensitive_feature = sensitive_features[0]  # Use the first sensitive feature
             evaluation.plot_fairness_metrics('selection_rate', sensitive_feature=sensitive_feature, kind='bar', save_path='selection_rate.png')
         st.image('selection_rate.png')
+
+def main():
+    """Main entry point for the EquiML Streamlit app."""
+    import subprocess
+    import sys
+
+    try:
+        subprocess.run([sys.executable, "-m", "streamlit", "run", __file__], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error running Streamlit app: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

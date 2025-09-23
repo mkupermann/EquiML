@@ -40,10 +40,10 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     entry_points={
         'console_scripts': [
-            'equiml-app = equiml.app:main',  # Adjust module path as needed
+            'equiml-app = src.streamlit_app:main',
         ],
     },
     include_package_data=True,

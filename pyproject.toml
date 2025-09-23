@@ -1,0 +1,105 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "equiml"
+version = "0.2.0"
+description = "An advanced framework for equitable and responsible machine learning with support for fairness, interpretability, and robustness."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Michael Kupermann"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "scikit-learn",
+    "fairlearn",
+    "shap",
+    "matplotlib",
+    "seaborn",
+    "streamlit",
+    "pandas",
+    "numpy",
+    "xgboost",
+    "optuna",
+    "skl2onnx",
+    "onnx",
+    "plotly",
+    "statsmodels",
+    "lime",
+    "scipy",
+    "joblib",
+    "lightgbm"
+]
+
+[project.optional-dependencies]
+image = ["opencv-python>=4.5.5.64"]
+text = ["nltk>=3.7"]
+dev = ["pytest>=7.1.1", "flake8>=4.0.1", "sphinx>=4.4.0", "coverage>=6.3.2", "mypy>=1.0.0", "black>=22.0.0"]
+deploy = ["docker>=5.0.3"]
+
+[project.urls]
+Homepage = "https://github.com/mkupermann/EquiML"
+"Bug Reports" = "https://github.com/mkupermann/EquiML/issues"
+"Source" = "https://github.com/mkupermann/EquiML"
+
+[project.scripts]
+equiml-app = "src.streamlit_app:main"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503", "E501"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".eggs",
+    "*.egg-info",
+    ".venv",
+    ".mypy_cache",
+    ".pytest_cache"
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true

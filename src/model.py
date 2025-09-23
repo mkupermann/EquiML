@@ -61,25 +61,47 @@ class Model:
             y_train (pd.Series): Training target data.
             sensitive_features (pd.Series, optional): Sensitive features for fairness mitigation.
             sample_weight (pd.Series, optional): Sample weights for training.
+
+        Raises:
+            ValueError: If input data is invalid or fairness constraint is unsupported.
+            RuntimeError: If model training fails.
         """
-        if self.fairness_constraint and sensitive_features is not None:
-            if self.fairness_constraint not in self.constraint_map:
-                raise ValueError(f"Unsupported fairness constraint: {self.fairness_constraint}")
+        # Input validation
+        if X_train is None or X_train.empty:
+            raise ValueError("Training features (X_train) cannot be empty.")
+        if y_train is None or y_train.empty:
+            raise ValueError("Training targets (y_train) cannot be empty.")
+        if len(X_train) != len(y_train):
+            raise ValueError("Training features and targets must have the same length.")
 
-            if sample_weight is not None:
-                logger.warning("Sample weights are not supported with ExponentiatedGradient. Ignoring them.")
+        try:
+            if self.fairness_constraint and sensitive_features is not None:
+                if self.fairness_constraint not in self.constraint_map:
+                    raise ValueError(f"Unsupported fairness constraint: {self.fairness_constraint}")
 
-            constraint = self.constraint_map[self.fairness_constraint]()
-            mitigator = ExponentiatedGradient(self.model, constraints=constraint)
-            mitigator.fit(X_train, y_train, sensitive_features=sensitive_features)
-            self.model = mitigator
-            logger.info(f"Trained {self.algorithm} with {self.fairness_constraint} constraint.")
-        else:
-            self.model.fit(X_train, y_train, sample_weight=sample_weight)
-            if sample_weight is not None:
-                logger.info(f"Trained {self.algorithm} with sample weights.")
+                if len(sensitive_features) != len(X_train):
+                    raise ValueError("Sensitive features must have the same length as training data.")
+
+                if sample_weight is not None:
+                    logger.warning("Sample weights are not supported with ExponentiatedGradient. Ignoring them.")
+
+                constraint = self.constraint_map[self.fairness_constraint]()
+                mitigator = ExponentiatedGradient(self.model, constraints=constraint)
+                mitigator.fit(X_train, y_train, sensitive_features=sensitive_features)
+                self.model = mitigator
+                logger.info(f"Trained {self.algorithm} with {self.fairness_constraint} constraint.")
             else:
-                logger.info(f"Trained {self.algorithm} without fairness constraints.")
+                if sample_weight is not None and len(sample_weight) != len(X_train):
+                    raise ValueError("Sample weights must have the same length as training data.")
+
+                self.model.fit(X_train, y_train, sample_weight=sample_weight)
+                if sample_weight is not None:
+                    logger.info(f"Trained {self.algorithm} with sample weights.")
+                else:
+                    logger.info(f"Trained {self.algorithm} without fairness constraints.")
+        except Exception as e:
+            logger.error(f"Model training failed: {str(e)}")
+            raise RuntimeError(f"Failed to train model: {str(e)}") from e
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:
         """
@@ -90,8 +112,21 @@ class Model:
 
         Returns:
             np.ndarray: Predicted labels.
+
+        Raises:
+            ValueError: If input data is invalid.
+            RuntimeError: If model is not trained or prediction fails.
         """
-        return self.model.predict(X)
+        if self.model is None:
+            raise RuntimeError("Model has not been trained. Call train() first.")
+        if X is None or X.empty:
+            raise ValueError("Input data (X) cannot be empty.")
+
+        try:
+            return self.model.predict(X)
+        except Exception as e:
+            logger.error(f"Prediction failed: {str(e)}")
+            raise RuntimeError(f"Failed to make predictions: {str(e)}") from e
 
     def predict_proba(self, X: pd.DataFrame) -> np.ndarray:
         """

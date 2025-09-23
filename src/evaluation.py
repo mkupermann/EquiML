@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, 
-                             confusion_matrix, classification_report, mean_squared_error, r2_score, 
-                             mean_absolute_error, matthews_corrcoef, log_loss, balanced_accuracy_score, 
+from sklearn.metrics import (accuracy_score, precision_score, recall_score, f1_score, roc_auc_score,
+                             confusion_matrix, classification_report, mean_squared_error, r2_score,
+                             mean_absolute_error, matthews_corrcoef, log_loss, balanced_accuracy_score,
                              roc_curve, precision_recall_curve, brier_score_loss)
 from sklearn.calibration import calibration_curve
 from fairlearn.metrics import MetricFrame, demographic_parity_difference, equalized_odds_difference, equal_opportunity_difference, selection_rate
@@ -18,11 +18,12 @@ from statsmodels.stats.contingency_tables import mcnemar
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
+from typing import Dict, Any, Optional, Union, List
 
 class EquiMLEvaluation:
     """Comprehensive evaluation module for the EquiML framework, covering performance, fairness, robustness, and interpretability."""
     
-    def evaluate(self, model, X, y_true, y_pred=None, y_pred_proba=None, sensitive_features=None, cv=5, task='classification'):
+    def evaluate(self, model: Any, X: pd.DataFrame, y_true: pd.Series, y_pred: Optional[np.ndarray] = None, y_pred_proba: Optional[np.ndarray] = None, sensitive_features: Optional[pd.Series] = None, cv: int = 5, task: str = 'classification') -> Dict[str, Any]:
         """
         Evaluate model performance, fairness, robustness, and interpretability metrics.
         
