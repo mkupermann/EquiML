@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EquiML Evaluation Report</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        h1, h2, h3 { color: #333; }
+        .metric { background: #f4f4f4; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+        .metric h3 { margin-top: 0; }
+        .plot { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>EquiML Evaluation Report</h1>
+    <p>Generated on: 2025-09-23 12:58:22</p>
+
+    <h2>1. Performance Metrics</h2>
+    <div class="metric">
+        <h3>Accuracy</h3>
+        <p>0.9259</p>
+    </div>
+    <div class="metric">
+        <h3>Precision</h3>
+        <p>0.9506</p>
+    </div>
+    <div class="metric">
+        <h3>Recall</h3>
+        <p>0.9259</p>
+    </div>
+    <div class="metric">
+        <h3>F1-Score</h3>
+        <p>0.9316</p>
+    </div>
+    
+    <div class="metric">
+        <h3>ROC AUC</h3>
+        <p>1.0</p>
+    </div>
+    
+    <div class="plot">
+        <h3>Confusion Matrix</h3>
+        <img src="confusion_matrix.png" alt="Confusion Matrix">
+    </div>
+    
+    <div class="plot">
+        <h3>ROC Curve</h3>
+        <img src="roc_curve.png" alt="ROC Curve">
+    </div>
+    
+
+    <h2>2. Fairness Metrics</h2>
+    
+    <div class="metric">
+        <h3>Demographic Parity Difference</h3>
+        <p>0.2857</p>
+    </div>
+    
+    
+    <div class="metric">
+        <h3>Equalized Odds Difference</h3>
+        <p>1.0</p>
+    </div>
+    
+    
+    <div class="metric">
+        <h3>Equal Opportunity Difference</h3>
+        <p>1.0</p>
+    </div>
+    
+    <div class="plot">
+        <h3>Fairness Metrics Comparison</h3>
+        <img src="fairness_metrics.png" alt="Fairness Metrics">
+    </div>
+
+    <h2>3. Robustness Metrics</h2>
+    
+    <div class="metric">
+        <h3>Cross-Validation Mean Accuracy</h3>
+        <p>0.8533</p>
+    </div>
+    <div class="metric">
+        <h3>Cross-Validation Std Dev</h3>
+        <p>0.0748</p>
+    </div>
+    <div class="metric">
+        <h3>Noise Sensitivity</h3>
+        <p>0.9259</p>
+    </div>
+    
+
+    <h2>4. Interpretability</h2>
+    
+    <div class="plot">
+        <h3>Feature Importance</h3>
+        <img src="feature_importance.png" alt="Feature Importance">
+    </div>
+    <div class="plot">
+        <h3>SHAP Summary</h3>
+        <img src="shap_summary.png" alt="SHAP Summary">
+    </div>
+    
+
+    <h2>5. Recommendations</h2>
+    <div class="metric">
+        <p>
+            Based on the evaluation results, here are some recommendations:
+            <ul>
+                
+                
+                <li>The model shows signs of bias. Consider using fairness mitigation techniques like reweighing or adversarial debiasing.</li>
+                
+                
+            </ul>
+        </p>
+    </div>
+
+</body>
+</html>

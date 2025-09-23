@@ -102,22 +102,60 @@
     </div>
     {% endif %}
 
-    <h2>5. Recommendations</h2>
-    <div class="metric">
-        <p>
-            Based on the evaluation results, here are some recommendations:
-            <ul>
-                {% if metrics.f1_score < 0.7 %}
-                <li>The model's F1-score is low. Consider trying different algorithms or feature engineering.</li>
-                {% endif %}
-                {% if 'demographic_parity_difference' in metrics and metrics.demographic_parity_difference > 0.1 %}
-                <li>The model shows signs of bias. Consider using fairness mitigation techniques like reweighing or adversarial debiasing.</li>
-                {% endif %}
-                {% if 'robustness' in metrics and metrics.robustness.cv_std > 0.1 %}
-                <li>The model's performance varies significantly across cross-validation folds. The model might be unstable.</li>
-                {% endif %}
-            </ul>
-        </p>
+    <h2>5. Detailed Recommendations & Action Plan</h2>
+    {% if recommendations %}
+        {% for recommendation in recommendations %}
+        <div class="recommendation-card" style="background: #f9f9f9; border-left: 5px solid
+        {% if recommendation.priority == 'CRITICAL' %}#d32f2f
+        {% elif recommendation.priority == 'HIGH' %}#f57c00
+        {% elif recommendation.priority == 'MEDIUM' %}#ffa000
+        {% else %}#388e3c{% endif %};
+        margin: 20px 0; padding: 15px;">
+
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="background:
+                {% if recommendation.priority == 'CRITICAL' %}#d32f2f
+                {% elif recommendation.priority == 'HIGH' %}#f57c00
+                {% elif recommendation.priority == 'MEDIUM' %}#ffa000
+                {% else %}#388e3c{% endif %};
+                color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">
+                    {{ recommendation.priority }}
+                </span>
+                <span style="margin-left: 10px; font-weight: bold; color: #333;">
+                    {{ recommendation.category }}
+                </span>
+            </div>
+
+            <h3 style="color: #333; margin: 10px 0;">{{ recommendation.issue }}</h3>
+
+            <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h4 style="color: #1976d2; margin-top: 0;">📋 Action Plan:</h4>
+                <pre style="white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.5; color: #333;">{{ recommendation.action }}</pre>
+            </div>
+
+            {% if recommendation.code_example %}
+            <div style="background: #263238; color: #f8f8f2; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h4 style="color: #81c784; margin-top: 0;">💻 Code Example:</h4>
+                <pre style="overflow-x: auto; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 13px; line-height: 1.4;"><code>{{ recommendation.code_example }}</code></pre>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="metric">
+            <p>No specific recommendations generated. Please ensure all metrics are properly calculated.</p>
+        </div>
+    {% endif %}
+
+    <div style="background: #e3f2fd; border: 1px solid #bbdefb; padding: 15px; border-radius: 5px; margin-top: 20px;">
+        <h3 style="color: #1976d2; margin-top: 0;">💡 Next Steps Summary</h3>
+        <ol style="color: #333; line-height: 1.6;">
+            <li><strong>Prioritize Critical/High priority items</strong> - Address these first</li>
+            <li><strong>Implement solutions incrementally</strong> - Test each change individually</li>
+            <li><strong>Measure impact</strong> - Re-run evaluation after each improvement</li>
+            <li><strong>Document changes</strong> - Keep track of what works and what doesn't</li>
+            <li><strong>Set up monitoring</strong> - Continuously track model performance in production</li>
+        </ol>
     </div>
 
 </body>

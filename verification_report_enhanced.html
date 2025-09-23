@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EquiML Evaluation Report</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        h1, h2, h3 { color: #333; }
+        .metric { background: #f4f4f4; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; }
+        .metric h3 { margin-top: 0; }
+        .plot { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>EquiML Evaluation Report</h1>
+    <p>Generated on: 2025-09-23 14:06:13</p>
+
+    <h2>1. Performance Metrics</h2>
+    <div class="metric">
+        <h3>Accuracy</h3>
+        <p>0.8889</p>
+    </div>
+    <div class="metric">
+        <h3>Precision</h3>
+        <p>0.9444</p>
+    </div>
+    <div class="metric">
+        <h3>Recall</h3>
+        <p>0.8889</p>
+    </div>
+    <div class="metric">
+        <h3>F1-Score</h3>
+        <p>0.9037</p>
+    </div>
+    
+    <div class="metric">
+        <h3>ROC AUC</h3>
+        <p>0.9375</p>
+    </div>
+    
+    <div class="plot">
+        <h3>Confusion Matrix</h3>
+        <img src="confusion_matrix.png" alt="Confusion Matrix">
+    </div>
+    
+    <div class="plot">
+        <h3>ROC Curve</h3>
+        <img src="roc_curve.png" alt="ROC Curve">
+    </div>
+    
+
+    <h2>2. Fairness Metrics</h2>
+    
+    <div class="metric">
+        <h3>Demographic Parity Difference</h3>
+        <p>0.0357</p>
+    </div>
+    
+    
+    <div class="metric">
+        <h3>Equalized Odds Difference</h3>
+        <p>1.0</p>
+    </div>
+    
+    
+    <div class="metric">
+        <h3>Equal Opportunity Difference</h3>
+        <p>1.0</p>
+    </div>
+    
+    <div class="plot">
+        <h3>Fairness Metrics Comparison</h3>
+        <img src="fairness_metrics.png" alt="Fairness Metrics">
+    </div>
+
+    <h2>3. Robustness Metrics</h2>
+    
+    <div class="metric">
+        <h3>Cross-Validation Mean Accuracy</h3>
+        <p>0.9</p>
+    </div>
+    <div class="metric">
+        <h3>Cross-Validation Std Dev</h3>
+        <p>0.1225</p>
+    </div>
+    <div class="metric">
+        <h3>Noise Sensitivity</h3>
+        <p>0.9444</p>
+    </div>
+    
+
+    <h2>4. Interpretability</h2>
+    
+    <div class="plot">
+        <h3>Feature Importance</h3>
+        <img src="feature_importance.png" alt="Feature Importance">
+    </div>
+    <div class="plot">
+        <h3>SHAP Summary</h3>
+        <img src="shap_summary.png" alt="SHAP Summary">
+    </div>
+    
+
+    <h2>5. Detailed Recommendations & Action Plan</h2>
+    
+        
+        <div class="recommendation-card" style="background: #f9f9f9; border-left: 5px solid
+        #f57c00
+        ;
+        margin: 20px 0; padding: 15px;">
+
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="background:
+                #f57c00
+                ;
+                color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">
+                    HIGH
+                </span>
+                <span style="margin-left: 10px; font-weight: bold; color: #333;">
+                    Fairness
+                </span>
+            </div>
+
+            <h3 style="color: #333; margin: 10px 0;">Equalized odds violation (100.0%) - different error rates across groups</h3>
+
+            <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h4 style="color: #1976d2; margin-top: 0;">📋 Action Plan:</h4>
+                <pre style="white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.5; color: #333;">EQUALIZED ODDS MITIGATION:
+1. Use EqualizedOdds constraint in training
+2. Post-processing threshold optimization
+3. Group-specific model calibration
+4. Implement fairness-aware ensemble methods
+5. Regular monitoring of group-specific performance</pre>
+            </div>
+
+            
+            <div style="background: #263238; color: #f8f8f2; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h4 style="color: #81c784; margin-top: 0;">💻 Code Example:</h4>
+                <pre style="overflow-x: auto; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 13px; line-height: 1.4;"><code># Equalized odds constraint
+from fairlearn.reductions import EqualizedOdds
+constraint = EqualizedOdds()
+mitigator = ExponentiatedGradient(model, constraint)
+mitigator.fit(X_train, y_train, sensitive_features=sensitive_train)</code></pre>
+            </div>
+            
+        </div>
+        
+        <div class="recommendation-card" style="background: #f9f9f9; border-left: 5px solid
+        #ffa000
+        ;
+        margin: 20px 0; padding: 15px;">
+
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="background:
+                #ffa000
+                ;
+                color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">
+                    MEDIUM
+                </span>
+                <span style="margin-left: 10px; font-weight: bold; color: #333;">
+                    Robustness
+                </span>
+            </div>
+
+            <h3 style="color: #333; margin: 10px 0;">High performance variance (12.2%) indicates model instability</h3>
+
+            <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h4 style="color: #1976d2; margin-top: 0;">📋 Action Plan:</h4>
+                <pre style="white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.5; color: #333;">STABILITY IMPROVEMENTS:
+1. Increase training data size
+2. Use more robust algorithms (Random Forest, XGBoost)
+3. Apply regularization (L1/L2 for linear models)
+4. Reduce model complexity
+5. Use stratified cross-validation
+6. Implement ensemble methods for stability
+7. Check for data leakage or temporal dependencies</pre>
+            </div>
+
+            
+            <div style="background: #263238; color: #f8f8f2; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h4 style="color: #81c784; margin-top: 0;">💻 Code Example:</h4>
+                <pre style="overflow-x: auto; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 13px; line-height: 1.4;"><code># Regularized model for stability
+from sklearn.linear_model import LogisticRegression
+model = LogisticRegression(C=0.1, penalty='l2', random_state=42)
+
+# Ensemble for robustness
+from sklearn.ensemble import VotingClassifier
+ensemble = VotingClassifier([
+    ('lr', LogisticRegression()),
+    ('rf', RandomForestClassifier()),
+    ('xgb', XGBClassifier())
+], voting='soft')</code></pre>
+            </div>
+            
+        </div>
+        
+        <div class="recommendation-card" style="background: #f9f9f9; border-left: 5px solid
+        #ffa000
+        ;
+        margin: 20px 0; padding: 15px;">
+
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="background:
+                #ffa000
+                ;
+                color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px;">
+                    MEDIUM
+                </span>
+                <span style="margin-left: 10px; font-weight: bold; color: #333;">
+                    Deployment
+                </span>
+            </div>
+
+            <h3 style="color: #333; margin: 10px 0;">Model deployment and monitoring considerations</h3>
+
+            <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h4 style="color: #1976d2; margin-top: 0;">📋 Action Plan:</h4>
+                <pre style="white-space: pre-wrap; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.5; color: #333;">PRODUCTION READINESS:
+1. Set up model versioning and experiment tracking
+2. Implement automated testing pipeline
+3. Create model documentation and API documentation
+4. Establish monitoring dashboards for:
+   - Prediction accuracy
+   - Fairness metrics
+   - Data drift
+   - Model performance
+5. Plan for model updates and rollback procedures
+6. Implement logging for audit trails
+7. Set up alerts for performance degradation</pre>
+            </div>
+
+            
+            <div style="background: #263238; color: #f8f8f2; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                <h4 style="color: #81c784; margin-top: 0;">💻 Code Example:</h4>
+                <pre style="overflow-x: auto; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 13px; line-height: 1.4;"><code># Basic monitoring setup
+import logging
+logging.basicConfig(level=logging.INFO)
+
+def predict_with_monitoring(model, X):
+    predictions = model.predict(X)
+    # Log predictions for monitoring
+    logging.info(f"Prediction made: {len(predictions)} samples")
+    return predictions</code></pre>
+            </div>
+            
+        </div>
+        
+    
+
+    <div style="background: #e3f2fd; border: 1px solid #bbdefb; padding: 15px; border-radius: 5px; margin-top: 20px;">
+        <h3 style="color: #1976d2; margin-top: 0;">💡 Next Steps Summary</h3>
+        <ol style="color: #333; line-height: 1.6;">
+            <li><strong>Prioritize Critical/High priority items</strong> - Address these first</li>
+            <li><strong>Implement solutions incrementally</strong> - Test each change individually</li>
+            <li><strong>Measure impact</strong> - Re-run evaluation after each improvement</li>
+            <li><strong>Document changes</strong> - Keep track of what works and what doesn't</li>
+            <li><strong>Set up monitoring</strong> - Continuously track model performance in production</li>
+        </ol>
+    </div>
+
+</body>
+</html>

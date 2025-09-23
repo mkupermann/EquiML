@@ -360,6 +360,208 @@ class Data:
         else:
             raise ValueError(f"Unsupported mitigation method: {method}")
 
+    def apply_bias_mitigation(self, method: str = 'reweighing') -> None:
+        """
+        Apply bias mitigation preprocessing techniques.
+
+        Args:
+            method (str): Bias mitigation method ('reweighing', 'correlation_removal', 'data_augmentation')
+        """
+        if self.sensitive_features is None or len(self.sensitive_features) == 0:
+            logger.warning("No sensitive features specified. Skipping bias mitigation.")
+            return
+
+        try:
+            if method == 'reweighing':
+                self._apply_reweighing()
+            elif method == 'correlation_removal':
+                self._apply_correlation_removal()
+            elif method == 'data_augmentation':
+                self._apply_data_augmentation()
+            else:
+                raise ValueError(f"Unsupported bias mitigation method: {method}")
+            logger.info(f"Applied bias mitigation: {method}")
+        except Exception as e:
+            logger.error(f"Bias mitigation failed: {str(e)}")
+            raise
+
+    def _apply_reweighing(self) -> None:
+        """Apply reweighing to balance sensitive groups."""
+        if self.X is None or self.y is None:
+            raise ValueError("Data must be preprocessed before applying reweighing.")
+
+        # Calculate sample weights to balance sensitive groups
+        from sklearn.utils.class_weight import compute_sample_weight
+
+        # Get sensitive feature values
+        sensitive_cols = [col for col in self.X.columns if any(sf in col for sf in self.sensitive_features)]
+        if not sensitive_cols:
+            logger.warning("No sensitive feature columns found for reweighing.")
+            return
+
+        # Use first sensitive feature for reweighing
+        sensitive_values = self.X[sensitive_cols[0]]
+
+        # Create stratification based on sensitive feature and target
+        stratify_values = [f"{s}_{t}" for s, t in zip(sensitive_values, self.y)]
+
+        # Calculate balanced weights
+        self.sample_weights = compute_sample_weight('balanced', stratify_values)
+        logger.info("Reweighing applied successfully.")
+
+    def _apply_correlation_removal(self) -> None:
+        """Remove correlation with sensitive attributes."""
+        try:
+            from fairlearn.preprocessing import CorrelationRemover
+
+            # Find sensitive feature columns
+            sensitive_cols = [col for col in self.X.columns if any(sf in col for sf in self.sensitive_features)]
+            if not sensitive_cols:
+                logger.warning("No sensitive feature columns found for correlation removal.")
+                return
+
+            # Get sensitive feature indices
+            sensitive_indices = [self.X.columns.get_loc(col) for col in sensitive_cols]
+
+            # Apply correlation removal
+            cr = CorrelationRemover(sensitive_feature_ids=sensitive_indices)
+            X_transformed = cr.fit_transform(self.X)
+
+            # Update features with transformed data
+            self.X = pd.DataFrame(X_transformed, columns=self.X.columns, index=self.X.index)
+            logger.info("Correlation removal applied successfully.")
+
+        except ImportError:
+            logger.error("Fairlearn not available. Install with: pip install fairlearn")
+            raise
+
+    def _apply_data_augmentation(self) -> None:
+        """Apply data augmentation for underrepresented groups."""
+        if self.X is None or self.y is None:
+            raise ValueError("Data must be preprocessed before applying data augmentation.")
+
+        # Find sensitive feature columns
+        sensitive_cols = [col for col in self.X.columns if any(sf in col for sf in self.sensitive_features)]
+        if not sensitive_cols:
+            logger.warning("No sensitive feature columns found for data augmentation.")
+            return
+
+        # Use SMOTE for minority groups based on sensitive features
+        try:
+            from imblearn.over_sampling import SMOTE
+
+            # Combine target and sensitive feature for stratification
+            sensitive_values = self.X[sensitive_cols[0]]
+            combined_target = [f"{s}_{t}" for s, t in zip(sensitive_values, self.y)]
+
+            # Apply SMOTE
+            smote = SMOTE(random_state=42)
+            X_resampled, y_resampled = smote.fit_resample(self.X, combined_target)
+
+            # Extract original target from combined target
+            y_original = [int(ct.split('_')[1]) for ct in y_resampled]
+
+            # Update data
+            self.X = pd.DataFrame(X_resampled, columns=self.X.columns)
+            self.y = pd.Series(y_original, name=self.y.name)
+
+            logger.info("Data augmentation applied successfully.")
+
+        except ImportError:
+            logger.error("imbalanced-learn not available. Install with: pip install imbalanced-learn")
+            raise
+
+    def handle_class_imbalance(self, method: str = 'smote', sampling_strategy: str = 'auto') -> None:
+        """
+        Handle class imbalance in the dataset.
+
+        Args:
+            method: Imbalance handling method ('smote', 'random_oversample', 'random_undersample', 'class_weights')
+            sampling_strategy: Sampling strategy for resampling methods
+        """
+        if self.X is None or self.y is None:
+            raise ValueError("Data must be preprocessed before handling class imbalance.")
+
+        try:
+            if method == 'smote':
+                self._apply_smote(sampling_strategy)
+            elif method == 'random_oversample':
+                self._apply_random_oversample(sampling_strategy)
+            elif method == 'random_undersample':
+                self._apply_random_undersample(sampling_strategy)
+            elif method == 'class_weights':
+                self._calculate_class_weights()
+            else:
+                raise ValueError(f"Unsupported imbalance handling method: {method}")
+            logger.info(f"Class imbalance handled using {method}")
+        except Exception as e:
+            logger.error(f"Class imbalance handling failed: {str(e)}")
+            raise
+
+    def _apply_smote(self, sampling_strategy: str) -> None:
+        """Apply SMOTE oversampling."""
+        try:
+            from imblearn.over_sampling import SMOTE
+
+            smote = SMOTE(sampling_strategy=sampling_strategy, random_state=42)
+            X_resampled, y_resampled = smote.fit_resample(self.X, self.y)
+
+            self.X = pd.DataFrame(X_resampled, columns=self.X.columns)
+            self.y = pd.Series(y_resampled, name=self.y.name)
+
+            logger.info(f"SMOTE applied. New dataset size: {len(self.X)}")
+
+        except ImportError:
+            logger.error("imbalanced-learn not available. Install with: pip install imbalanced-learn")
+            raise
+
+    def _apply_random_oversample(self, sampling_strategy: str) -> None:
+        """Apply random oversampling."""
+        try:
+            from imblearn.over_sampling import RandomOverSampler
+
+            oversampler = RandomOverSampler(sampling_strategy=sampling_strategy, random_state=42)
+            X_resampled, y_resampled = oversampler.fit_resample(self.X, self.y)
+
+            self.X = pd.DataFrame(X_resampled, columns=self.X.columns)
+            self.y = pd.Series(y_resampled, name=self.y.name)
+
+            logger.info(f"Random oversampling applied. New dataset size: {len(self.X)}")
+
+        except ImportError:
+            logger.error("imbalanced-learn not available. Install with: pip install imbalanced-learn")
+            raise
+
+    def _apply_random_undersample(self, sampling_strategy: str) -> None:
+        """Apply random undersampling."""
+        try:
+            from imblearn.under_sampling import RandomUnderSampler
+
+            undersampler = RandomUnderSampler(sampling_strategy=sampling_strategy, random_state=42)
+            X_resampled, y_resampled = undersampler.fit_resample(self.X, self.y)
+
+            self.X = pd.DataFrame(X_resampled, columns=self.X.columns)
+            self.y = pd.Series(y_resampled, name=self.y.name)
+
+            logger.info(f"Random undersampling applied. New dataset size: {len(self.X)}")
+
+        except ImportError:
+            logger.error("imbalanced-learn not available. Install with: pip install imbalanced-learn")
+            raise
+
+    def _calculate_class_weights(self) -> None:
+        """Calculate class weights for imbalanced datasets."""
+        from sklearn.utils.class_weight import compute_class_weight
+
+        classes = np.unique(self.y)
+        class_weights = compute_class_weight('balanced', classes=classes, y=self.y)
+
+        # Store as sample weights
+        weight_dict = dict(zip(classes, class_weights))
+        self.sample_weights = np.array([weight_dict[label] for label in self.y])
+
+        logger.info("Class weights calculated for imbalanced dataset.")
+
     def split_data(self, test_size: float = 0.2, random_state: int = 42) -> None:
         """
         Splits the data into training and testing sets.

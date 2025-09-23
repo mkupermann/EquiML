@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 from src.data import Data
 from src.model import Model
-from src.evaluation import Evaluation
+from src.evaluation import EquiMLEvaluation
 
 st.title("EquiML: Fair Machine Learning Dashboard")
 
@@ -25,8 +25,10 @@ if uploaded_file:
         model = Model(algorithm=algorithm, fairness_constraint='demographic_parity' if fairness_constraint else None)
         model.train(data.X_train, data.y_train, sensitive_features=data.X_train[sensitive_features] if sensitive_features else None)
         
-        evaluation = Evaluation(model, data.X_test, data.y_test, sensitive_features=data.X_test[sensitive_features] if sensitive_features else None)
-        metrics = evaluation.evaluate()
+        evaluation = EquiMLEvaluation()
+        predictions = model.predict(data.X_test)
+        sensitive_test = data.X_test[sensitive_features] if sensitive_features else None
+        metrics = evaluation.evaluate(model, data.X_test, data.y_test, y_pred=predictions, sensitive_features=sensitive_test)
         st.write("Evaluation Metrics:", metrics)
         
         if sensitive_features:
