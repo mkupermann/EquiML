@@ -68,7 +68,7 @@ A **Large Language Model (LLM)** is an AI system that:
 
 ### **The Problem with Biased LLMs**
 
-** Real Examples of LLM Bias:**
+**Real Examples of LLM Bias:**
 
 1. **Gender Bias**:
    - Prompt: "The doctor said..."
