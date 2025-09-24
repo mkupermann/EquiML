@@ -22,30 +22,46 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "scikit-learn",
-    "fairlearn",
-    "shap",
-    "matplotlib",
-    "seaborn",
-    "streamlit",
-    "pandas",
-    "numpy",
-    "xgboost",
-    "optuna",
-    "skl2onnx",
-    "onnx",
-    "plotly",
-    "statsmodels",
-    "lime",
-    "scipy",
-    "joblib",
-    "lightgbm"
+    "pandas>=1.5.0",
+    "numpy>=1.21.0",
+    "scikit-learn>=1.1.0",
+    "fairlearn>=0.8.0",
+    "shap>=0.40.0",
+    "lime>=0.2.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+    "plotly>=5.0.0",
+    "streamlit>=1.20.0",
+    "scipy>=1.9.0",
+    "joblib>=1.1.0",
+    "statsmodels>=0.13.0"
 ]
 
 [project.optional-dependencies]
+# Full ML capabilities (heavy dependencies)
+full = [
+    "xgboost>=1.6.0",
+    "lightgbm>=3.3.0",
+    "optuna>=3.0.0",
+    "skl2onnx>=1.10.0",
+    "onnx>=1.12.0"
+]
+# Computer vision
 image = ["opencv-python>=4.5.5.64"]
+# Natural language processing
 text = ["nltk>=3.7"]
-dev = ["pytest>=7.1.1", "flake8>=4.0.1", "sphinx>=4.4.0", "coverage>=6.3.2", "mypy>=1.0.0", "black>=22.0.0"]
+# Development tools
+dev = [
+    "pytest>=7.1.1",
+    "flake8>=4.0.1",
+    "sphinx>=4.4.0",
+    "coverage>=6.3.2",
+    "mypy>=1.0.0",
+    "black>=22.0.0",
+    "bandit>=1.7.0",
+    "safety>=2.0.0"
+]
+# Deployment
 deploy = ["docker>=5.0.3"]
 
 [project.urls]

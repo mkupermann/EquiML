@@ -1,10 +1,21 @@
 import pandas as pd
 import numpy as np
-from src.model import Model
-from src.data import Data
-from src.evaluation import EquiMLEvaluation
 import pytest
 import os
+import sys
+
+# Add parent directory to path for CI compatibility
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+try:
+    from src.model import Model
+    from src.data import Data
+    from src.evaluation import EquiMLEvaluation
+except ImportError:
+    # Fallback for different environments
+    from equiml.model import Model
+    from equiml.data import Data
+    from equiml.evaluation import EquiMLEvaluation
 
 @pytest.fixture
 def dummy_data():

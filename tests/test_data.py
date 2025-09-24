@@ -1,7 +1,16 @@
 import pandas as pd
-from src.data import Data
 import os
 import numpy as np
+import sys
+
+# Add parent directory to path for CI compatibility
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+try:
+    from src.data import Data
+except ImportError:
+    # Fallback for different environments
+    from equiml.data import Data
 
 def test_load_data():
     """
