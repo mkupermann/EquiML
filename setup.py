@@ -1,4 +1,16 @@
 from setuptools import setup, find_packages
+import os
+
+def _get_long_description():
+    """Get long description, handling Docker build context"""
+    readme_path = 'README.md'
+    if os.path.exists(readme_path):
+        try:
+            with open(readme_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception:
+            pass
+    return 'EquiML: A comprehensive framework for equitable and responsible machine learning with support for fairness, interpretability, and robustness.'
 
 setup(
     name='equiml',
@@ -32,7 +44,7 @@ setup(
     },
     author='Michael Kupermann',
     description='An advanced framework for equitable and responsible machine learning with support for fairness, interpretability, and robustness.',
-    long_description=open('README.md').read(),
+    long_description=_get_long_description(),
     long_description_content_type='text/markdown',
     url='https://github.com/mkupermann/EquiML',
     classifiers=[

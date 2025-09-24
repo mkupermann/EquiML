@@ -88,15 +88,52 @@ wandb/
 tmp/
 temp/
 *.tmp
+*.working
+*.fixed
+*.complete
+*.ultimate
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
 
 # ML specific
 mlruns/
 .mlflow/
+models/
+checkpoints/
 
-# Docker
-.dockerignore
+# Docker temporary files
+Dockerfile.*
+!Dockerfile
+!examples/web_demo/Dockerfile
+docker-compose.*.yml
+!docker-compose.yml
+!docker-compose.dev.yml
+!docker-compose.prod.yml
+
+# Build scripts (keep only essential)
+build-*.sh
+!docker/build.sh
+
+# Temporary requirements
+requirements-*.txt
+!requirements.txt
 
 # Cloud
 .aws/
 .gcp/
 .azure/
+
+# IDE and editor files
+*.swp
+*.swo
+*~
+.vscode/settings.json
+
+# System files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes

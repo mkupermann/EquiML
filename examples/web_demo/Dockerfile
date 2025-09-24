@@ -4,22 +4,26 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
     curl \
-    software-properties-common \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Copy and install dependencies
 COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
 
-# Install Python dependencies
-RUN pip3 install -r requirements.txt
+# Copy EquiML source from parent directories
+COPY ../../src ./src
+COPY ../../tests ./tests
 
-# Copy EquiML source
-COPY ../src ./src
-COPY ../tests ./tests
-COPY app.py .
+# Copy web demo application files
+COPY app.py analytics.py landing_page.py ./
+
+# Set Python path
+ENV PYTHONPATH=/app
+
+# Create necessary directories
+RUN mkdir -p /app/outputs /app/data
 
 # Expose port
 EXPOSE 8501
@@ -28,4 +32,4 @@ EXPOSE 8501
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
 # Run the app
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]

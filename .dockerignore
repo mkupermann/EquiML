@@ -1,0 +1,104 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing
+.coverage
+.pytest_cache/
+.tox/
+htmlcov/
+.nox/
+
+# Documentation build
+docs/_build/
+
+# Logs
+*.log
+logs/
+wandb/
+
+# Environment
+.env
+.env.local
+
+# Generated files
+*.html
+outputs/
+experiments/
+notebooks/.ipynb_checkpoints/
+
+# Docker
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+docker/
+
+# CI/CD
+.github/
+
+# Large data files (mount as volumes instead)
+data/
+*.csv
+*.json
+*.xlsx
+*.parquet
+!tests/data/adult.csv
+
+# Models and checkpoints
+models/
+checkpoints/
+*.pkl
+*.joblib
+*.h5
+
+# Temporary
+tmp/
+temp/
+*.tmp
