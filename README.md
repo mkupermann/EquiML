@@ -206,11 +206,11 @@ fair_predictions = model.apply_fairness_postprocessing(X_test, sensitive_feature
 
 This demonstrates EquiML's complete pipeline: enhanced preprocessing, robust training, comprehensive evaluation, real-time monitoring, and detailed actionable reporting.
 
-## 🌐 Try the Live Demo
+## Try the Live Demo
 
 **Want to test AI bias instantly?** Visit our live web demo:
 
-### **[🚀 equiml.ai - Instant Bias Analysis](examples/web_demo/)**
+### **[equiml.ai - Instant Bias Analysis](examples/web_demo/)**
 
 **Features:**
 - **30-second bias analysis** for any CSV dataset
@@ -236,7 +236,7 @@ streamlit run app.py
 
 EquiML provides comprehensive documentation for all skill levels and use cases:
 
-### **📚 Complete Learning Guides**
+### **Complete Learning Guides**
 
 #### **[Complete Beginner's Guide to EquiML](docs/guides/Complete_Beginners_Guide_to_EquiML.md)**
 *1,028 lines | For absolute beginners*
@@ -266,7 +266,7 @@ EquiML provides comprehensive documentation for all skill levels and use cases:
 - Production deployment with API server
 - Complete working code for every step
 
-### **🎯 Quick References**
+### **Quick References**
 - **[Original Beginner's Tutorial](Beginners_Tutorial_for_Using_EquiML.md)** - Basic EquiML usage tutorial
 - **[Installation Guide](#installation)** - Quick setup instructions below
 - **[API Reference](src/)** - Source code documentation
@@ -323,7 +323,7 @@ EquiML/
 
 ### **Key Directories**
 
-#### **🌐 Live Web Demo** (`examples/web_demo/`)
+#### **Live Web Demo** (`examples/web_demo/`)
 Production-ready web application for **equiml.ai** featuring:
 - Instant bias analysis (30-second results)
 - Real-time fairness visualizations
@@ -331,20 +331,20 @@ Production-ready web application for **equiml.ai** featuring:
 - Social sharing and viral features
 - One-click deployment with Docker
 
-#### **📚 Comprehensive Guides** (`docs/guides/`)
+#### **Comprehensive Guides** (`docs/guides/`)
 Complete learning resources totaling **5,448 lines** of documentation:
 - **Beginner's Guide**: Traditional ML with fairness (1,028 lines)
 - **LLM Development Guide**: Building fair language models (1,887 lines)
 - **LoRA Fine-Tuning Guide**: Efficient LLM customization (2,533 lines)
 
-#### **🧪 Test Suite** (`tests/`)
+#### **Test Suite** (`tests/`)
 Comprehensive testing framework with:
 - Unit tests for all core functionality
 - Integration tests for complete workflows
 - Sample datasets for validation
 - Automated CI/CD testing
 
-#### **🎯 Practical Examples** (`examples/`)
+#### **Practical Examples** (`examples/`)
 Ready-to-use implementations including:
 - **Web Demo**: Live bias analysis platform
 - **Jupyter Notebooks**: Interactive tutorials
