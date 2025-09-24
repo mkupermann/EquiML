@@ -116,8 +116,13 @@ Follow these steps to set up EquiML on your local machine.
 
 5. **Verify Installation**:
    ```python
+   # Method 1: Import as installed package
+   import equiml
+   print("EquiML installed successfully!")
+
+   # Method 2: Import from source (development)
    from src.data import Data
-   print("EquiML is ready!")
+   print("EquiML development environment ready!")
    ```
 
 ## Quick Start
@@ -132,7 +137,7 @@ from src.monitoring import BiasMonitor
 import pandas as pd
 
 # Load and preprocess data with bias mitigation
-data = Data(dataset_path='tests/adult.csv', sensitive_features=['sex'])
+data = Data(dataset_path='tests/data/adult.csv', sensitive_features=['sex'])
 data.load_data()
 data.preprocess(
     target_column='income',
@@ -199,6 +204,32 @@ fair_predictions = model.apply_fairness_postprocessing(X_test, sensitive_feature
 
 This demonstrates EquiML's complete pipeline: enhanced preprocessing, robust training, comprehensive evaluation, real-time monitoring, and detailed actionable reporting.
 
+## 🌐 Try the Live Demo
+
+**Want to test AI bias instantly?** Visit our live web demo:
+
+### **[🚀 equiml.ai - Instant Bias Analysis](examples/web_demo/)**
+
+**Features:**
+- **30-second bias analysis** for any CSV dataset
+- **Real-time fairness visualizations** with interactive charts
+- **Certified Fair AI badges** (Gold/Silver/Bronze) you can share
+- **Social media integration** for viral sharing
+- **Live global statistics** showing community impact
+
+**Perfect for:**
+- Testing your AI models quickly
+- Getting shareable fairness certifications
+- Demonstrating EquiML capabilities
+- Building trust with stakeholders
+
+```bash
+# Run locally
+cd examples/web_demo
+pip install -r requirements.txt
+streamlit run app.py
+```
+
 ## Documentation & Tutorials
 
 EquiML provides comprehensive documentation for all skill levels and use cases:
@@ -239,32 +270,83 @@ EquiML provides comprehensive documentation for all skill levels and use cases:
 - **[API Reference](src/)** - Source code documentation
 
 ## Project Structure
-EquiML's enhanced architecture includes:
+EquiML follows GitHub best practices with a clean, organized structure:
 
-### **Core Modules (`src/` directory)**
-- **`data.py`**: Enhanced data handling with bias mitigation, class imbalance handling, and multi-modal support.
-- **`model.py`**: Advanced model training with robust algorithms, stability improvements, hyperparameter tuning, and fairness constraints.
-- **`evaluation.py`**: Comprehensive evaluation including performance, fairness, robustness, and interpretability metrics.
-- **`reporting.py`**: Enhanced HTML report generation with detailed recommendations and actionable code examples.
-- **`monitoring.py`**: Real-time bias monitoring, data drift detection, and automated alerting systems.
-- **`visualization.py`**: Rich visualizations for bias analysis, fairness metrics, and performance assessment.
-- **`streamlit_app.py`**: Interactive dashboard for non-technical users.
+```
+EquiML/
+├── 📄 README.md                    # Project overview and quick start
+├── 📄 LICENSE                      # MIT license
+├── 📄 CONTRIBUTING.md              # Contribution guidelines
+├── 📄 SECURITY.md                  # Security policy
+├── 📦 requirements.txt             # Core dependencies
+├── ⚙️ pyproject.toml               # Modern Python project configuration
+├── 🔧 setup.py                     # Package installation
+├── 🚫 .gitignore                   # Git exclusions
+├── 🧹 .flake8                      # Code quality configuration
+├── 🔍 mypy.ini                     # Type checking configuration
+├── 📁 src/                         # Source code
+│   ├── 📦 __init__.py              # Package initialization
+│   ├── 📊 data.py                  # Data processing with bias mitigation
+│   ├── 🤖 model.py                 # Model training with fairness constraints
+│   ├── 📈 evaluation.py            # Comprehensive evaluation metrics
+│   ├── 🛡️ monitoring.py            # Real-time bias monitoring
+│   ├── 📝 reporting.py             # Enhanced report generation
+│   ├── 📊 visualization.py         # Rich visualizations
+│   └── 🌐 streamlit_app.py         # Interactive dashboard
+├── 🧪 tests/                       # Test suite
+│   ├── 📦 __init__.py              # Test package initialization
+│   ├── 🔬 test_*.py                # Comprehensive unit tests
+│   └── 📊 data/                    # Test datasets
+│       └── 👥 adult.csv            # Sample census data
+├── 📚 docs/                        # Documentation
+│   └── 📖 guides/                  # Complete learning guides
+│       ├── 🗺️ README.md            # Guide selection helper
+│       ├── 📘 Complete_Beginners_Guide_to_EquiML.md (1,028 lines)
+│       ├── 📘 Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md (1,887 lines)
+│       └── 📘 Complete_Guide_to_Fine_Tuning_LLMs_with_LoRA_and_EquiML.md (2,533 lines)
+├── 🎯 examples/                    # Practical applications
+│   ├── 🌐 web_demo/               # Live demo for equiml.ai
+│   ├── 📓 notebooks/              # Jupyter tutorials
+│   ├── 🔧 scripts/                # Command-line tools
+│   └── 📋 README.md               # Examples documentation
+├── ⚙️ .github/                     # GitHub automation
+│   ├── 🔄 workflows/              # CI/CD pipelines
+│   ├── 🐛 ISSUE_TEMPLATE.md       # Issue reporting template
+│   └── 🔀 PULL_REQUEST_TEMPLATE.md # PR guidelines
+└── 🎨 assets/                      # Static assets
+    ├── 🖼️ images/                  # Project images
+    ├── 🏷️ logos/                   # Branding assets
+    └── 📱 social-media/            # Social media assets
+```
 
-### **Configuration Files**
-- **`pyproject.toml`**: Modern Python project configuration with linting and type checking.
-- **`.flake8`**: Code quality and style configuration.
-- **`mypy.ini`**: Type checking configuration for improved code quality.
+### **Key Directories**
 
-### **Documentation**
-- **`docs/guides/`**: Comprehensive learning guides and tutorials
-  - `Complete_Beginners_Guide_to_EquiML.md` - Traditional ML guide (1,028 lines)
-  - `Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md` - LLM development guide (1,887 lines)
-  - `Complete_Guide_to_Fine_Tuning_LLMs_with_LoRA_and_EquiML.md` - LoRA fine-tuning guide (2,533 lines)
-- **`Beginners_Tutorial_for_Using_EquiML.md`**: Original basic tutorial
+#### **🌐 Live Web Demo** (`examples/web_demo/`)
+Production-ready web application for **equiml.ai** featuring:
+- Instant bias analysis (30-second results)
+- Real-time fairness visualizations
+- Certified Fair AI badge generation
+- Social sharing and viral features
+- One-click deployment with Docker
 
-### **Testing & Examples**
-- **`tests/`**: Unit tests, sample datasets (adult.csv), and test utilities.
-- **Example reports**: Multiple HTML reports demonstrating different use cases and features.
+#### **📚 Comprehensive Guides** (`docs/guides/`)
+Complete learning resources totaling **5,448 lines** of documentation:
+- **Beginner's Guide**: Traditional ML with fairness (1,028 lines)
+- **LLM Development Guide**: Building fair language models (1,887 lines)
+- **LoRA Fine-Tuning Guide**: Efficient LLM customization (2,533 lines)
+
+#### **🧪 Test Suite** (`tests/`)
+Comprehensive testing framework with:
+- Unit tests for all core functionality
+- Integration tests for complete workflows
+- Sample datasets for validation
+- Automated CI/CD testing
+
+#### **🎯 Practical Examples** (`examples/`)
+Ready-to-use implementations including:
+- **Web Demo**: Live bias analysis platform
+- **Jupyter Notebooks**: Interactive tutorials
+- **CLI Scripts**: Command-line bias analysis tools
 
 ## Contributing
 We welcome contributions to make EquiML a leading tool for responsible AI. To contribute:
