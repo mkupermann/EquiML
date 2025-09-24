@@ -20,19 +20,19 @@ chmod +x deploy.sh
 
 ## Features
 
-### 🔍 **Instant Bias Analysis**
+### **Instant Bias Analysis**
 - Upload any CSV dataset
 - Get bias analysis in seconds
 - Real-time fairness scoring
 - Comprehensive recommendations
 
-### 📊 **Real-Time Visualizations**
+### **Real-Time Visualizations**
 - Interactive bias gauge
 - Group outcome comparisons
 - Fairness metrics dashboard
 - Professional charts and graphs
 
-### 🏆 **Certified Fair AI Badges**
+### **Certified Fair AI Badges**
 - Gold/Silver/Bronze certification levels
 - Shareable HTML badges
 - Social media integration
