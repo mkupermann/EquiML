@@ -241,11 +241,17 @@ streamlit run app.py
 # Try EquiML immediately
 docker run -it mkupermann/equiml:latest
 
+# Complete web demo with instant bias analysis
+docker run -p 8501:8501 mkupermann/equiml-demo
+
 # Development environment with Jupyter
-docker run -p 8888:8888 mkupermann/equiml:jupyter
+docker run -p 8888:8888 mkupermann/equiml-dev
+
+# Research environment with examples
+docker run -p 8888:8888 mkupermann/equiml-jupyter
 
 # Production deployment
-docker-compose -f docker-compose.prod.yml up -d
+docker run -p 8501:8501 mkupermann/equiml-prod
 ```
 
 See [DOCKER.md](DOCKER.md) for complete containerization guide.
@@ -285,7 +291,7 @@ EquiML provides comprehensive documentation for all skill levels and use cases:
 - Complete working code for every step
 
 ### **Quick References**
-- **[Original Beginner's Tutorial](Beginners_Tutorial_for_Using_EquiML.md)** - Basic EquiML usage tutorial
+- **Docker Hub Images**: [mkupermann/equiml-*](https://hub.docker.com/u/mkupermann) - Ready-to-use containers
 - **[Installation Guide](#installation)** - Quick setup instructions below
 - **[API Reference](src/)** - Source code documentation
 

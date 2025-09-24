@@ -96,7 +96,7 @@ spec:
     spec:
       containers:
       - name: equiml-demo
-        image: equiml/demo:latest
+        image: mkupermann/equiml-demo:latest
         ports:
         - containerPort: 8501
 ```

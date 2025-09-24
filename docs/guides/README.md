@@ -66,7 +66,7 @@ The most comprehensive guide available for fine-tuning open-source LLMs like Lla
 | Learn AI basics with fairness | Complete Beginner's Guide | 1-2 weeks |
 | Build fair chatbots/text AI | Fair LLMs Guide | 2-4 weeks |
 | Fine-tune Llama/Mistral efficiently | LoRA Fine-Tuning Guide | 1-2 weeks |
-| Quick start with EquiML | [Original Tutorial](../../Beginners_Tutorial_for_Using_EquiML.md) | 1-2 days |
+| Quick start with EquiML | [Main README](../../README.md) | 1-2 days |
 
 ## Prerequisites by Guide
 
