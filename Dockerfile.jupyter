@@ -1,0 +1,52 @@
+# EquiML - Jupyter Notebook Image
+# Ready-to-use Jupyter environment with EquiML and example notebooks
+
+FROM jupyter/scipy-notebook:latest
+
+# Switch to root for installations
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Switch back to jupyter user
+USER $NB_UID
+
+WORKDIR /home/jovyan/work
+
+# Copy requirements and install
+COPY requirements.txt pyproject.toml setup.py ./
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    pip install jupyterlab-git && \
+    pip install ipywidgets
+
+# Install optional ML packages
+RUN pip install xgboost lightgbm optuna || echo "Some packages may not install"
+
+# Copy EquiML source
+COPY --chown=${NB_UID}:${NB_GID} src/ ./src/
+COPY --chown=${NB_UID}:${NB_GID} tests/ ./tests/
+COPY --chown=${NB_UID}:${NB_GID} docs/ ./docs/
+COPY --chown=${NB_UID}:${NB_GID} examples/ ./examples/
+
+# Install EquiML
+RUN pip install -e .
+
+# Copy example notebooks to work directory
+COPY --chown=${NB_UID}:${NB_GID} examples/notebooks/ ./notebooks/
+
+# Create directories for user work
+RUN mkdir -p ./data ./outputs ./experiments
+
+# Set up Jupyter extensions
+RUN jupyter labextension install @jupyter-widgets/jupyterlab-manager
+
+# Default working directory with examples
+WORKDIR /home/jovyan/work
+
+LABEL purpose="jupyter-research" \
+      includes="jupyter-lab,equiml,examples,notebooks"

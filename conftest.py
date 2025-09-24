@@ -32,7 +32,7 @@ def setup_test_environment():
     os.environ['TESTING'] = 'true'
     os.environ['PYTEST_RUNNING'] = 'true'
 
-    print("✅ Test environment configured")
+    print(" Test environment configured")
 
 @pytest.fixture
 def sample_dataframe():

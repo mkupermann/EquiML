@@ -4,22 +4,22 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.2.x   | ✅ Yes            |
-| 0.1.x   | ⚠️ Security fixes only |
-| < 0.1   | ❌ No             |
+| 0.2.x   |  Yes            |
+| 0.1.x   |  Security fixes only |
+| < 0.1   |  No             |
 
 ## Reporting a Vulnerability
 
 We take security seriously at EquiML. If you discover a security vulnerability, please follow these steps:
 
-### 🔒 Private Disclosure
+###  Private Disclosure
 
 **DO NOT** create a public GitHub issue for security vulnerabilities.
 
 Instead, please email security findings to:
 **mkupermann@kupermann.com** with subject line "SECURITY: [Brief Description]"
 
-### 📋 What to Include
+###  What to Include
 
 Please include the following information:
 - Description of the vulnerability
@@ -28,7 +28,7 @@ Please include the following information:
 - Suggested fix (if you have one)
 - Your contact information
 
-### ⏱️ Response Timeline
+### ⏱ Response Timeline
 
 - **Initial Response**: Within 24 hours
 - **Assessment**: Within 72 hours
@@ -44,7 +44,7 @@ We believe in recognizing security researchers who help make EquiML safer:
 
 ## Security Best Practices
 
-### 🛡️ For Users
+###  For Users
 
 When using EquiML:
 - Always use the latest version
@@ -64,7 +64,7 @@ When contributing to EquiML:
 
 ## Security Features
 
-### 🔍 Built-in Protections
+###  Built-in Protections
 
 EquiML includes:
 - Input validation and sanitization
@@ -73,7 +73,7 @@ EquiML includes:
 - Audit logging for compliance
 - Safe model serialization
 
-### 🚨 Vulnerability Management
+###  Vulnerability Management
 
 We actively:
 - Monitor dependencies for known vulnerabilities

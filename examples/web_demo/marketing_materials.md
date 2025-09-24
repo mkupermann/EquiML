@@ -23,12 +23,12 @@
 
 **Launch Tweet:**
 ```
-🚨 NEW: Test any AI model for bias in 30 seconds
+ NEW: Test any AI model for bias in 30 seconds
 
-✅ Upload dataset
-✅ Get instant analysis
-✅ Earn Fair AI certification
-✅ Share results publicly
+ Upload dataset
+ Get instant analysis
+ Earn Fair AI certification
+ Share results publicly
 
 80% of AI models are secretly biased. Let's fix that.
 
@@ -39,7 +39,7 @@ Try it free: equiml.ai
 
 **Challenge Tweet:**
 ```
-🎯 #AIBiasChallenge
+ #AIBiasChallenge
 
 1. Test your AI model at equiml.ai
 2. Share your bias score
@@ -58,9 +58,9 @@ The worst bias score wins our respect for transparency 👏
 🏆 GOLD CERTIFICATION ACHIEVED!
 
 Just tested our hiring AI:
-✅ 2.3% bias (down from 31%!)
-✅ Fair across all demographics
-✅ Ready for production
+ 2.3% bias (down from 31%!)
+ Fair across all demographics
+ Ready for production
 
 Thanks @EquiML for making fairness accessible!
 
@@ -111,7 +111,7 @@ Test yours: equiml.ai
 • Used by Fortune 500 companies
 
 8/10 TEST YOUR AI RIGHT NOW:
-🔗 equiml.ai
+ equiml.ai
 • Upload any dataset
 • Get instant bias analysis
 • Earn certification badges
@@ -144,7 +144,7 @@ Every day, biased AI systems make millions of decisions about hiring, lending, h
 
 At EquiML, we've built the world's first instant bias analysis platform. Upload any dataset, get comprehensive fairness analysis in 30 seconds, and earn a shareable "Certified Fair AI" badge.
 
-🎯 What we've achieved:
+ What we've achieved:
 • 47,000+ AI models analyzed for bias
 • 18,000+ Fair AI certifications issued
 • 2,800+ companies using our platform
@@ -170,10 +170,10 @@ Using EquiML's fairness framework:
 4. Achieved EquiML GOLD certification (2.1% bias)
 
 THE RESULTS:
-✅ 94% reduction in gender bias
-✅ Maintained 89% accuracy
-✅ Regulatory compliance achieved
-✅ Improved diversity in hires by 340%
+ 94% reduction in gender bias
+ Maintained 89% accuracy
+ Regulatory compliance achieved
+ Improved diversity in hires by 340%
 
 THE IMPACT:
 "EquiML saved us from a potential $50M discrimination lawsuit while helping us build a more diverse team." - TechCorp CTO
@@ -249,9 +249,9 @@ Hi [Name],
 Welcome to EquiML! You're joining 50,000+ developers building fair AI.
 
 Here's what you can do right now:
-🔍 Test any AI model for bias in 30 seconds
+ Test any AI model for bias in 30 seconds
 🏆 Earn shareable Fair AI certification badges
-📊 Get actionable fairness improvement recommendations
+ Get actionable fairness improvement recommendations
 
 Quick start: equiml.ai
 
@@ -316,8 +316,8 @@ bias_score = equiml.scan_bias(model, data)
 ```
 
 Ready to dive deeper?
-📚 Complete guides: github.com/mkupermann/EquiML/docs/guides/
-🧪 Live demo: equiml.ai
+ Complete guides: github.com/mkupermann/EquiML/docs/guides/
+ Live demo: equiml.ai
 
 Michael
 ```

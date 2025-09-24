@@ -1,0 +1,74 @@
+version: '3.8'
+
+# Production deployment configuration
+services:
+  equiml-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: equiml-production
+    restart: unless-stopped
+    environment:
+      - PYTHONPATH=/app
+      - EQUIML_ENV=production
+    volumes:
+      - ./data:/app/data:ro
+      - ./outputs:/app/outputs
+      - ./logs:/app/logs
+    networks:
+      - equiml-prod
+    healthcheck:
+      test: ["CMD", "python", "-c", "import equiml; print('healthy')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  equiml-web:
+    build:
+      context: examples/web_demo
+      dockerfile: Dockerfile
+    container_name: equiml-web
+    restart: unless-stopped
+    environment:
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_ENABLE_CORS=false
+      - STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION=false
+    volumes:
+      - ./outputs:/app/outputs
+    networks:
+      - equiml-prod
+    depends_on:
+      - equiml-api
+
+  nginx:
+    image: nginx:alpine
+    container_name: equiml-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx-prod.conf:/etc/nginx/nginx.conf
+      - ./docker/ssl:/etc/nginx/ssl
+    networks:
+      - equiml-prod
+    restart: unless-stopped
+    depends_on:
+      - equiml-web
+
+  redis:
+    image: redis:7-alpine
+    container_name: equiml-redis
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - equiml-prod
+    restart: unless-stopped
+    command: redis-server --save 20 1 --loglevel warning --requirepass equiml_redis_password
+
+volumes:
+  redis_prod_data:
+
+networks:
+  equiml-prod:
+    driver: bridge

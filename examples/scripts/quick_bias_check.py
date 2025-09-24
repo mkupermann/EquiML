@@ -18,13 +18,13 @@ from src.evaluation import EquiMLEvaluation
 def quick_bias_analysis(dataset_path, target_col, sensitive_cols):
     """Perform quick bias analysis and return results"""
 
-    print(f"🔍 Analyzing {dataset_path} for bias...")
+    print(f" Analyzing {dataset_path} for bias...")
 
     # Load data
     data = Data(dataset_path=dataset_path, sensitive_features=sensitive_cols)
     data.load_data()
 
-    print(f"📊 Dataset: {data.df.shape[0]} rows, {data.df.shape[1]} columns")
+    print(f" Dataset: {data.df.shape[0]} rows, {data.df.shape[1]} columns")
 
     # Quick preprocessing
     data.preprocess(
@@ -48,7 +48,7 @@ def quick_bias_analysis(dataset_path, target_col, sensitive_cols):
         sensitive_features_test = data.X_test[sensitive_feature_columns[0]]
         X_test = data.X_test.drop(columns=sensitive_feature_columns)
     else:
-        print("⚠️  Warning: No sensitive feature columns found after preprocessing")
+        print("  Warning: No sensitive feature columns found after preprocessing")
         X_train, X_test = data.X_train, data.X_test
         sensitive_features_train = sensitive_features_test = None
 
@@ -68,16 +68,16 @@ def print_results(metrics):
     """Print bias analysis results in a user-friendly format"""
 
     print("\n" + "="*60)
-    print("🎯 BIAS ANALYSIS RESULTS")
+    print(" BIAS ANALYSIS RESULTS")
     print("="*60)
 
     # Performance metrics
-    print(f"\n📈 PERFORMANCE:")
+    print(f"\n PERFORMANCE:")
     print(f"   Accuracy: {metrics.get('accuracy', 0):.1%}")
     print(f"   F1-Score: {metrics.get('f1_score', 0):.1%}")
 
     # Fairness metrics
-    print(f"\n⚖️  FAIRNESS:")
+    print(f"\n  FAIRNESS:")
     dp_diff = metrics.get('demographic_parity_difference', 0)
     eo_diff = metrics.get('equalized_odds_difference', 0)
 
@@ -87,22 +87,22 @@ def print_results(metrics):
     # Overall assessment
     max_bias = max(abs(dp_diff), abs(eo_diff))
 
-    print(f"\n🎯 OVERALL ASSESSMENT:")
+    print(f"\n OVERALL ASSESSMENT:")
 
     if max_bias <= 0.1:
-        print("   ✅ EXCELLENT - Low bias detected")
+        print("    EXCELLENT - Low bias detected")
         print("   🏆 Eligible for EquiML GOLD certification")
     elif max_bias <= 0.2:
-        print("   🟡 MODERATE - Some bias detected")
+        print("    MODERATE - Some bias detected")
         print("   🥈 Eligible for EquiML SILVER certification")
     elif max_bias <= 0.3:
         print("   🟠 CONCERNING - Significant bias detected")
         print("   🥉 Eligible for EquiML BRONZE certification")
     else:
-        print("   🔴 CRITICAL - High bias detected")
-        print("   ❌ Immediate action required")
+        print("    CRITICAL - High bias detected")
+        print("    Immediate action required")
 
-    print(f"\n💡 RECOMMENDATIONS:")
+    print(f"\n RECOMMENDATIONS:")
     if max_bias > 0.2:
         print("   1. Apply bias mitigation techniques")
         print("   2. Use fairness-constrained training")
@@ -141,7 +141,7 @@ def main():
 
     # Validate inputs
     if not os.path.exists(args.dataset):
-        print(f"❌ Error: Dataset file '{args.dataset}' not found")
+        print(f" Error: Dataset file '{args.dataset}' not found")
         sys.exit(1)
 
     try:
@@ -160,14 +160,14 @@ def main():
 
         # Verbose output
         if args.verbose:
-            print(f"\n🔬 DETAILED METRICS:")
+            print(f"\n DETAILED METRICS:")
             for key, value in metrics.items():
                 if isinstance(value, (int, float)):
                     print(f"   {key}: {value:.4f}")
 
     except Exception as e:
-        print(f"❌ Error during analysis: {str(e)}")
-        print(f"💡 Try: python quick_bias_check.py --help")
+        print(f" Error during analysis: {str(e)}")
+        print(f" Try: python quick_bias_check.py --help")
         sys.exit(1)
 
 if __name__ == "__main__":

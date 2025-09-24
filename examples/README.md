@@ -17,7 +17,7 @@ This directory contains practical examples and applications demonstrating EquiML
 - Advanced technique demonstrations
 - Research and experimentation notebooks
 
-## 🔧 Scripts
+##  Scripts
 **[examples/scripts/](scripts/)** - Practical automation scripts
 - Batch bias analysis tools
 - Model fairness validation scripts
@@ -66,7 +66,7 @@ python fairness_analyzer.py --help
 - Promotion decision equity
 - Compensation analysis
 
-### ⚖️ Criminal Justice
+###  Criminal Justice
 - Risk assessment bias detection
 - Sentencing recommendation fairness
 - Recidivism prediction equity

@@ -30,16 +30,16 @@ def create_landing_page():
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Models Analyzed", "47,392", "↗️ 1,247 today")
+        st.metric("Models Analyzed", "47,392", "↗ 1,247 today")
 
     with col2:
-        st.metric("Bias Eliminated", "23.7TB", "↗️ 156GB today")
+        st.metric("Bias Eliminated", "23.7TB", "↗ 156GB today")
 
     with col3:
-        st.metric("Companies Using", "2,847", "↗️ 73 this week")
+        st.metric("Companies Using", "2,847", "↗ 73 this week")
 
     with col4:
-        st.metric("Fair AI Certified", "18,294", "↗️ 891 this month")
+        st.metric("Fair AI Certified", "18,294", "↗ 891 this month")
 
     # Problem statement
     st.markdown("---")
@@ -47,7 +47,7 @@ def create_landing_page():
     col_problem, col_solution = st.columns([1, 1])
 
     with col_problem:
-        st.header("🚨 The AI Bias Crisis")
+        st.header(" The AI Bias Crisis")
 
         st.markdown("""
         **80% of AI models are secretly biased** against women, minorities, and other groups.
@@ -66,7 +66,7 @@ def create_landing_page():
         """)
 
     with col_solution:
-        st.header("✅ The EquiML Solution")
+        st.header(" The EquiML Solution")
 
         st.markdown("""
         **Instant bias detection and fairness certification** for any AI model.
@@ -97,20 +97,20 @@ def create_landing_page():
     """, unsafe_allow_html=True)
 
     # Live community feed
-    st.header("🌍 Live Community Activity")
+    st.header(" Live Community Activity")
 
     # Simulated live feed
     activity_data = [
         {"time": "2 min ago", "action": "🥇 TechCorp achieved GOLD certification", "bias": "2.3%"},
-        {"time": "5 min ago", "action": "🔍 DataCo analyzed hiring model", "bias": "18.7%"},
+        {"time": "5 min ago", "action": " DataCo analyzed hiring model", "bias": "18.7%"},
         {"time": "8 min ago", "action": "🥈 StartupXYZ earned SILVER certification", "bias": "8.9%"},
-        {"time": "12 min ago", "action": "⚠️ BigTech detected critical bias", "bias": "34.2%"},
-        {"time": "15 min ago", "action": "🎯 ResearchLab improved fairness", "bias": "5.1%"},
+        {"time": "12 min ago", "action": " BigTech detected critical bias", "bias": "34.2%"},
+        {"time": "15 min ago", "action": " ResearchLab improved fairness", "bias": "5.1%"},
     ]
 
     for activity in activity_data:
         bias_val = float(activity["bias"].rstrip('%'))
-        emoji = "🟢" if bias_val <= 10 else "🟡" if bias_val <= 20 else "🔴"
+        emoji = "" if bias_val <= 10 else "" if bias_val <= 20 else ""
 
         st.markdown(f"""
         <div style="padding: 0.5rem; border-left: 3px solid #ddd; margin: 0.5rem 0; background: #fafafa;">
@@ -135,7 +135,7 @@ def create_landing_page():
 
     with col_trust2:
         st.markdown("""
-        **🎓 Academic Recognition**
+        ** Academic Recognition**
         - 150+ research papers citing EquiML
         - 75+ university courses using EquiML
         - 25+ academic partnerships
@@ -144,7 +144,7 @@ def create_landing_page():
 
     with col_trust3:
         st.markdown("""
-        **🌟 Industry Recognition**
+        ** Industry Recognition**
         - "Best AI Ethics Tool 2024" - AI Awards
         - Featured in Nature AI Review
         - Endorsed by AI Ethics leaders
@@ -161,10 +161,10 @@ def create_landing_page():
         </p>
         <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
             <a href="https://github.com/mkupermann/EquiML" style="background: white; color: #667eea; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold;">
-                ⭐ Star on GitHub
+                 Star on GitHub
             </a>
             <a href="docs/guides/" style="background: rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; border: 2px solid white;">
-                📚 Read Documentation
+                 Read Documentation
             </a>
             <a href="mailto:mkupermann@kupermann.com" style="background: rgba(255,255,255,0.2); color: white; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; border: 2px solid white;">
                 🤝 Partner With Us
@@ -176,7 +176,7 @@ def create_landing_page():
 def create_demo_examples():
     """Create compelling demo examples"""
 
-    st.header("🎯 See EquiML in Action")
+    st.header(" See EquiML in Action")
 
     # Example datasets with known bias
     examples = {
@@ -243,11 +243,11 @@ def create_demo_examples():
             st.session_state['demo_data'] = example["data"]
             st.session_state['demo_target'] = example['target']
             st.session_state['demo_sensitive'] = example['sensitive']
-            st.success("✅ Example loaded! Scroll up to see the analysis.")
+            st.success(" Example loaded! Scroll up to see the analysis.")
 
 if __name__ == "__main__":
     # Show landing page first, then demo
-    tab1, tab2 = st.tabs(["🏠 Home", "🧪 Try Demo"])
+    tab1, tab2 = st.tabs(["🏠 Home", " Try Demo"])
 
     with tab1:
         create_landing_page()

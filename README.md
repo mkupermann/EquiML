@@ -4,7 +4,8 @@
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://python.org)
 [![GitHub Stars](https://img.shields.io/github/stars/mkupermann/EquiML?style=social)](https://github.com/mkupermann/EquiML/stargazers)
-[![Live Demo](https://img.shields.io/badge/🌐%20Live%20Demo-equiml.ai-brightgreen)](examples/web_demo/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-equiml.ai-brightgreen)](examples/web_demo/)
+[![Docker](https://img.shields.io/badge/Docker-Available-blue)](DOCKER.md)
 
 EquiML is an open-source Python framework designed to empower developers to create machine learning models that are accurate, fair, transparent, and accountable. In a world where AI influences critical decisions—such as hiring, lending, and healthcare—EquiML integrates fairness, explainability, and ethical considerations into every stage of the machine learning lifecycle, making responsible AI accessible to all.
 
@@ -232,6 +233,23 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
+## Docker Support
+
+**Run EquiML instantly with Docker:**
+
+```bash
+# Try EquiML immediately
+docker run -it mkupermann/equiml:latest
+
+# Development environment with Jupyter
+docker run -p 8888:8888 mkupermann/equiml:jupyter
+
+# Production deployment
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+See [DOCKER.md](DOCKER.md) for complete containerization guide.
+
 ## Documentation & Tutorials
 
 EquiML provides comprehensive documentation for all skill levels and use cases:
@@ -276,49 +294,70 @@ EquiML follows GitHub best practices with a clean, organized structure:
 
 ```
 EquiML/
-├── 📄 README.md                    # Project overview and quick start
-├── 📄 LICENSE                      # MIT license
-├── 📄 CONTRIBUTING.md              # Contribution guidelines
-├── 📄 SECURITY.md                  # Security policy
-├── 📦 requirements.txt             # Core dependencies
-├── ⚙️ pyproject.toml               # Modern Python project configuration
-├── 🔧 setup.py                     # Package installation
-├── 🚫 .gitignore                   # Git exclusions
-├── 🧹 .flake8                      # Code quality configuration
-├── 🔍 mypy.ini                     # Type checking configuration
-├── 📁 src/                         # Source code
-│   ├── 📦 __init__.py              # Package initialization
-│   ├── 📊 data.py                  # Data processing with bias mitigation
-│   ├── 🤖 model.py                 # Model training with fairness constraints
-│   ├── 📈 evaluation.py            # Comprehensive evaluation metrics
-│   ├── 🛡️ monitoring.py            # Real-time bias monitoring
-│   ├── 📝 reporting.py             # Enhanced report generation
-│   ├── 📊 visualization.py         # Rich visualizations
-│   └── 🌐 streamlit_app.py         # Interactive dashboard
-├── 🧪 tests/                       # Test suite
-│   ├── 📦 __init__.py              # Test package initialization
-│   ├── 🔬 test_*.py                # Comprehensive unit tests
-│   └── 📊 data/                    # Test datasets
-│       └── 👥 adult.csv            # Sample census data
-├── 📚 docs/                        # Documentation
-│   └── 📖 guides/                  # Complete learning guides
-│       ├── 🗺️ README.md            # Guide selection helper
-│       ├── 📘 Complete_Beginners_Guide_to_EquiML.md (1,028 lines)
-│       ├── 📘 Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md (1,887 lines)
-│       └── 📘 Complete_Guide_to_Fine_Tuning_LLMs_with_LoRA_and_EquiML.md (2,533 lines)
-├── 🎯 examples/                    # Practical applications
-│   ├── 🌐 web_demo/               # Live demo for equiml.ai
-│   ├── 📓 notebooks/              # Jupyter tutorials
-│   ├── 🔧 scripts/                # Command-line tools
-│   └── 📋 README.md               # Examples documentation
-├── ⚙️ .github/                     # GitHub automation
-│   ├── 🔄 workflows/              # CI/CD pipelines
-│   ├── 🐛 ISSUE_TEMPLATE.md       # Issue reporting template
-│   └── 🔀 PULL_REQUEST_TEMPLATE.md # PR guidelines
-└── 🎨 assets/                      # Static assets
-    ├── 🖼️ images/                  # Project images
-    ├── 🏷️ logos/                   # Branding assets
-    └── 📱 social-media/            # Social media assets
+├── README.md                     # Project overview and quick start
+├── LICENSE                       # MIT license
+├── CONTRIBUTING.md               # Contribution guidelines
+├── SECURITY.md                   # Security policy
+├── DOCKER.md                     # Docker deployment guide
+├── requirements.txt              # Core dependencies
+├── pyproject.toml                # Modern Python project configuration
+├── setup.py                      # Package installation
+├── .gitignore                    # Git exclusions
+├── .flake8                       # Code quality configuration
+├── mypy.ini                      # Type checking configuration
+├── conftest.py                   # Pytest configuration
+├── pytest.ini                   # Test configuration
+├── Dockerfile                    # Main Docker image
+├── Dockerfile.dev                # Development Docker image
+├── Dockerfile.prod               # Production Docker image
+├── Dockerfile.jupyter            # Jupyter research image
+├── docker-compose.yml            # Full stack deployment
+├── docker-compose.dev.yml        # Development deployment
+├── docker-compose.prod.yml       # Production deployment
+├── src/                          # Source code
+│   ├── __init__.py               # Package initialization
+│   ├── data.py                   # Data processing with bias mitigation
+│   ├── model.py                  # Model training with fairness constraints
+│   ├── evaluation.py             # Comprehensive evaluation metrics
+│   ├── monitoring.py             # Real-time bias monitoring
+│   ├── reporting.py              # Enhanced report generation
+│   ├── visualization.py          # Rich visualizations
+│   └── streamlit_app.py          # Interactive dashboard
+├── tests/                        # Test suite
+│   ├── __init__.py               # Test package initialization
+│   ├── test_basic.py             # Basic CI-friendly tests
+│   ├── test_data.py              # Data module tests
+│   ├── test_model.py             # Model module tests
+│   ├── test_evaluation.py        # Evaluation module tests
+│   ├── test_equiml_framework.py  # Integration tests
+│   └── data/                     # Test datasets
+│       └── adult.csv             # Sample census data
+├── docs/                         # Documentation
+│   ├── api/                      # API documentation
+│   ├── tutorials/                # Additional tutorials
+│   └── guides/                   # Complete learning guides
+│       ├── README.md             # Guide selection helper
+│       ├── Complete_Beginners_Guide_to_EquiML.md (1,028 lines)
+│       ├── Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md (1,887 lines)
+│       └── Complete_Guide_to_Fine_Tuning_LLMs_with_LoRA_and_EquiML.md (2,533 lines)
+├── examples/                     # Practical applications
+│   ├── web_demo/                 # Live demo for equiml.ai
+│   ├── notebooks/                # Jupyter tutorials
+│   ├── scripts/                  # Command-line tools
+│   └── README.md                 # Examples documentation
+├── docker/                       # Docker utilities
+│   ├── build.sh                  # Build all images
+│   └── test.sh                   # Test all images
+├── .github/                      # GitHub automation
+│   ├── workflows/                # CI/CD pipelines
+│   ├── ISSUE_TEMPLATE.md         # Issue reporting template
+│   └── PULL_REQUEST_TEMPLATE.md  # PR guidelines
+├── assets/                       # Static assets
+│   ├── images/                   # Project images
+│   ├── logos/                    # Branding assets
+│   └── social-media/             # Social media assets
+├── scripts/                      # Utility scripts
+└── config/                       # Configuration templates
 ```
 
 ### **Key Directories**
@@ -337,12 +376,19 @@ Complete learning resources totaling **5,448 lines** of documentation:
 - **LLM Development Guide**: Building fair language models (1,887 lines)
 - **LoRA Fine-Tuning Guide**: Efficient LLM customization (2,533 lines)
 
+#### **Docker Support** (`docker/`, `Dockerfile*`)
+Complete containerization solution:
+- **5 specialized images**: Core, Development, Production, Jupyter, Web Demo
+- **3 deployment configurations**: Development, Production, Full Stack
+- **Automated scripts**: Build, test, and deploy all images
+- **Production ready**: Security hardened, optimized builds
+
 #### **Test Suite** (`tests/`)
 Comprehensive testing framework with:
-- Unit tests for all core functionality
-- Integration tests for complete workflows
-- Sample datasets for validation
-- Automated CI/CD testing
+- **CI-friendly tests**: Work across all Python versions
+- **Unit tests**: All core functionality covered
+- **Integration tests**: Complete workflow validation
+- **Sample datasets**: Real-world validation data
 
 #### **Practical Examples** (`examples/`)
 Ready-to-use implementations including:

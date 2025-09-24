@@ -28,7 +28,7 @@ from src.monitoring import BiasMonitor
 # Page configuration
 st.set_page_config(
     page_title="EquiML - Instant AI Bias Analysis",
-    page_icon="⚖️",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -344,18 +344,18 @@ class CertificationBadgeGenerator:
         twitter_text = f"I just tested my AI model for bias using @EquiML! "
 
         if results['overall_bias_score'] <= 0.1:
-            twitter_text += f"✅ GOLD certification - {results['overall_bias_score']:.1%} bias detected. Building fair AI! #AIFairness #ResponsibleAI"
+            twitter_text += f" GOLD certification - {results['overall_bias_score']:.1%} bias detected. Building fair AI! #AIFairness #ResponsibleAI"
         elif results['overall_bias_score'] <= 0.2:
             twitter_text += f"🥈 SILVER certification - {results['overall_bias_score']:.1%} bias detected. Working on improvements! #AIFairness"
         else:
-            twitter_text += f"⚠️ {results['overall_bias_score']:.1%} bias detected. Time to make AI fairer! #AIBias #EquiML"
+            twitter_text += f" {results['overall_bias_score']:.1%} bias detected. Time to make AI fairer! #AIBias #EquiML"
 
         linkedin_text = f"""
 Just analyzed my AI model for bias using EquiML - the results are eye-opening!
 
-📊 Bias Score: {results['overall_bias_score']:.1%}
-🎯 Status: {results['certification_eligible'] and 'Certified Fair AI' or 'Improvement Needed'}
-⚖️ Analysis: Instant bias detection and fairness evaluation
+ Bias Score: {results['overall_bias_score']:.1%}
+ Status: {results['certification_eligible'] and 'Certified Fair AI' or 'Improvement Needed'}
+ Analysis: Instant bias detection and fairness evaluation
 
 Building responsible AI isn't just ethical - it's essential for business success and regulatory compliance.
 
@@ -441,7 +441,7 @@ def main():
 
     # Sidebar for demo stats
     with st.sidebar:
-        st.header("🌍 Global Impact")
+        st.header(" Global Impact")
 
         # Demo statistics
         stats = analytics.get_demo_stats()
@@ -449,8 +449,8 @@ def main():
         st.markdown(f"""
         <div class="demo-stats">
             <h4>Live Demo Stats</h4>
-            <p>📊 Analyses Run: <strong>{stats['total_analyses']:,}</strong></p>
-            <p>⚖️ Avg Bias Score: <strong>{stats['avg_bias_score']:.1%}</strong></p>
+            <p> Analyses Run: <strong>{stats['total_analyses']:,}</strong></p>
+            <p> Avg Bias Score: <strong>{stats['avg_bias_score']:.1%}</strong></p>
             <p>🏆 Certification Rate: <strong>{stats['certification_rate']:.1%}</strong></p>
         </div>
         """, unsafe_allow_html=True)
@@ -480,7 +480,7 @@ def main():
 
         st.markdown("---")
 
-        st.header("🚀 Quick Actions")
+        st.header(" Quick Actions")
         st.markdown("""
         **🔗 Share EquiML:**
         - [GitHub](https://github.com/mkupermann/EquiML)
@@ -505,12 +505,12 @@ def main():
         if st.session_state.get('use_sample', False):
             if 'sample_data' in st.session_state:
                 df = st.session_state['sample_data']
-                st.success("✅ Sample dataset loaded!")
+                st.success(" Sample dataset loaded!")
             else:
                 # Load adult dataset
                 try:
                     df = pd.read_csv('../tests/adult.csv')
-                    st.success("✅ Adult Income dataset loaded!")
+                    st.success(" Adult Income dataset loaded!")
                 except:
                     st.error("Sample dataset not found")
 
@@ -531,13 +531,13 @@ def main():
             if uploaded_file is not None:
                 try:
                     df = pd.read_csv(uploaded_file)
-                    st.success(f"✅ Dataset uploaded: {df.shape[0]} rows, {df.shape[1]} columns")
+                    st.success(f" Dataset uploaded: {df.shape[0]} rows, {df.shape[1]} columns")
                 except Exception as e:
                     st.error(f"Error loading file: {str(e)}")
 
         if df is not None:
             # Dataset preview
-            with st.expander("📊 Dataset Preview", expanded=False):
+            with st.expander(" Dataset Preview", expanded=False):
                 st.write("**Dataset Shape:**", df.shape)
                 st.write("**First 5 rows:**")
                 st.dataframe(df.head())
@@ -553,23 +553,23 @@ def main():
                     if missing.sum() > 0:
                         st.write(missing[missing > 0])
                     else:
-                        st.write("No missing values ✅")
+                        st.write("No missing values ")
 
             # Feature selection
-            st.header("⚙️ Configure Analysis")
+            st.header("⚙ Configure Analysis")
 
             col_config1, col_config2 = st.columns(2)
 
             with col_config1:
                 target_column = st.selectbox(
-                    "🎯 Select Target Column (what you're predicting)",
+                    " Select Target Column (what you're predicting)",
                     options=df.columns.tolist(),
                     help="This is the outcome you want your AI to predict fairly"
                 )
 
             with col_config2:
                 sensitive_features = st.multiselect(
-                    "⚖️ Select Sensitive Features (for fairness analysis)",
+                    " Select Sensitive Features (for fairness analysis)",
                     options=[col for col in df.columns if col != target_column],
                     default=[col for col in df.columns if any(keyword in col.lower()
                             for keyword in ['sex', 'gender', 'race', 'age', 'ethnicity'])],
@@ -577,12 +577,12 @@ def main():
                 )
 
             # Analysis button
-            if st.button("🔍 Analyze for Bias", type="primary", use_container_width=True):
+            if st.button(" Analyze for Bias", type="primary", use_container_width=True):
                 if not sensitive_features:
-                    st.warning("⚠️ Please select at least one sensitive feature for bias analysis")
+                    st.warning(" Please select at least one sensitive feature for bias analysis")
                 else:
                     # Run instant bias analysis
-                    with st.spinner("🔄 Analyzing dataset for bias..."):
+                    with st.spinner(" Analyzing dataset for bias..."):
                         start_time = time.time()
 
                         # Quick bias analysis
@@ -610,12 +610,12 @@ def main():
                             'timestamp': datetime.now().isoformat()
                         }
 
-                    st.success(f"✅ Analysis completed in {processing_time:.2f} seconds!")
+                    st.success(f" Analysis completed in {processing_time:.2f} seconds!")
                     st.rerun()
 
     with col2:
         # Live statistics panel
-        st.header("📈 Live Statistics")
+        st.header(" Live Statistics")
 
         stats = analytics.get_demo_stats()
 
@@ -626,10 +626,10 @@ def main():
 
         # Recent activity
         if stats['total_analyses'] > 0:
-            st.markdown("**🔥 Recent Activity:**")
+            st.markdown("** Recent Activity:**")
             events = st.session_state.get('analytics_events', [])[-5:]
             for event in reversed(events):
-                bias_level = "🟢" if event['bias_score'] <= 0.1 else "🟡" if event['bias_score'] <= 0.2 else "🔴"
+                bias_level = "" if event['bias_score'] <= 0.1 else "" if event['bias_score'] <= 0.2 else ""
                 st.markdown(f"{bias_level} {event['bias_score']:.1%} bias detected")
 
     # Results display
@@ -638,7 +638,7 @@ def main():
         bias_results = results['bias_results']
 
         st.markdown("---")
-        st.header("📋 Analysis Results")
+        st.header(" Analysis Results")
 
         # Overall bias score display
         bias_score = bias_results['overall_bias_score']
@@ -646,7 +646,7 @@ def main():
         if bias_score <= 0.1:
             st.markdown(f"""
             <div class="bias-score-low">
-                <h3>🎉 Excellent Fairness Score!</h3>
+                <h3> Excellent Fairness Score!</h3>
                 <p><strong>Overall Bias: {bias_score:.1%}</strong></p>
                 <p>Your model shows excellent fairness characteristics. Consider applying for EquiML certification!</p>
             </div>
@@ -654,7 +654,7 @@ def main():
         elif bias_score <= 0.2:
             st.markdown(f"""
             <div class="bias-score-medium">
-                <h3>⚠️ Moderate Bias Detected</h3>
+                <h3> Moderate Bias Detected</h3>
                 <p><strong>Overall Bias: {bias_score:.1%}</strong></p>
                 <p>Your model shows some bias. Consider applying EquiML's bias mitigation techniques.</p>
             </div>
@@ -662,18 +662,18 @@ def main():
         else:
             st.markdown(f"""
             <div class="bias-score-high">
-                <h3>🚨 High Bias Detected!</h3>
+                <h3> High Bias Detected!</h3>
                 <p><strong>Overall Bias: {bias_score:.1%}</strong></p>
                 <p>Significant bias detected. Immediate action recommended to ensure fair AI.</p>
             </div>
             """, unsafe_allow_html=True)
 
         # Detailed visualizations
-        st.header("📊 Detailed Fairness Analysis")
+        st.header(" Detailed Fairness Analysis")
         visualizer.create_bias_dashboard(bias_results, df)
 
         # Recommendations
-        st.header("💡 Actionable Recommendations")
+        st.header(" Actionable Recommendations")
 
         for i, rec in enumerate(bias_results['recommendations'], 1):
             if 'CRITICAL' in rec:
@@ -707,25 +707,25 @@ def main():
             twitter_url = f"https://twitter.com/intent/tweet?text={share_info['twitter_text']}"
             st.markdown(f"[Tweet Results]({twitter_url})")
 
-            st.markdown("**💼 Share on LinkedIn:**")
+            st.markdown("** Share on LinkedIn:**")
             st.text_area("LinkedIn Post", share_info['linkedin_text'], height=100)
 
         with col_share2:
             st.markdown("**🔗 Shareable Link:**")
             st.code(share_info['share_url'])
 
-            st.markdown("**📋 Embed Badge:**")
+            st.markdown("** Embed Badge:**")
             st.code(badge_html, language='html')
 
         # Call to action
         st.markdown("---")
-        st.header("🚀 Take Action")
+        st.header(" Take Action")
 
         col_action1, col_action2, col_action3 = st.columns(3)
 
         with col_action1:
             st.markdown("""
-            **🛠️ Fix the Bias**
+            **🛠 Fix the Bias**
 
             [Download EquiML](https://github.com/mkupermann/EquiML)
 
@@ -734,7 +734,7 @@ def main():
 
         with col_action2:
             st.markdown("""
-            **📚 Learn More**
+            ** Learn More**
 
             [Read Our Guides](docs/guides/)
 
@@ -754,7 +754,7 @@ def main():
     st.markdown("---")
     st.markdown("""
     <div style="text-align: center; color: #666; margin-top: 2rem;">
-        <p>Built with ❤️ by the EquiML team | Making AI fair for everyone</p>
+        <p>Built with ❤ by the EquiML team | Making AI fair for everyone</p>
         <p>
             <a href="https://github.com/mkupermann/EquiML">GitHub</a> |
             <a href="docs/guides/">Documentation</a> |

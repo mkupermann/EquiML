@@ -161,7 +161,7 @@ class DemoAnalytics:
     def create_analytics_dashboard(self):
         """Create analytics dashboard for admin view"""
 
-        st.header("📊 EquiML Demo Analytics Dashboard")
+        st.header(" EquiML Demo Analytics Dashboard")
 
         # Global statistics
         stats = self.get_global_stats()
@@ -181,7 +181,7 @@ class DemoAnalytics:
             st.metric("Bias Eliminated", f"{stats['bias_eliminated_gb']/1000:.1f}TB")
 
         # Usage trends (simulated data)
-        st.subheader("📈 Usage Trends")
+        st.subheader(" Usage Trends")
 
         # Generate trend data
         dates = pd.date_range(
@@ -208,7 +208,7 @@ class DemoAnalytics:
         st.plotly_chart(fig_trends, use_container_width=True)
 
         # Bias score distribution
-        st.subheader("⚖️ Global Bias Score Distribution")
+        st.subheader(" Global Bias Score Distribution")
 
         # Simulated bias score data
         bias_scores = np.random.beta(2, 5, 10000) * 0.5  # Realistic bias distribution
@@ -228,7 +228,7 @@ class DemoAnalytics:
         st.plotly_chart(fig_dist, use_container_width=True)
 
         # Geographic distribution
-        st.subheader("🌍 Global Reach")
+        st.subheader(" Global Reach")
 
         # Simulated country data
         countries_data = pd.DataFrame({

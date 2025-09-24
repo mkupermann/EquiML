@@ -36,7 +36,7 @@ def test_basic_imports():
         with open('src/monitoring.py', 'r') as f:
             ast.parse(f.read())
 
-        print("✅ All modules have valid Python syntax")
+        print(" All modules have valid Python syntax")
 
     except SyntaxError as e:
         pytest.fail(f"Syntax error in modules: {e}")
