@@ -199,30 +199,44 @@ fair_predictions = model.apply_fairness_postprocessing(X_test, sensitive_feature
 
 This demonstrates EquiML's complete pipeline: enhanced preprocessing, robust training, comprehensive evaluation, real-time monitoring, and detailed actionable reporting.
 
-## Comprehensive Tutorials
-EquiML provides detailed guides for different learning paths:
+## Documentation & Tutorials
 
-### **For Complete Beginners**
-**[Complete Beginner's Guide to EquiML](Complete_Beginners_Guide_to_EquiML.md)** - A comprehensive 1,000+ line guide covering:
+EquiML provides comprehensive documentation for all skill levels and use cases:
+
+### **📚 Complete Learning Guides**
+
+#### **[Complete Beginner's Guide to EquiML](docs/guides/Complete_Beginners_Guide_to_EquiML.md)**
+*1,028 lines | For absolute beginners*
 - What EquiML does in simple terms with real-world examples
 - Step-by-step installation for all operating systems
 - Your first fair AI model with copy-paste ready code
 - Understanding results and metrics
 - Advanced features and real-world applications
 - 4-week structured learning path
-- Common problems and solutions
+- Comprehensive troubleshooting guide
 
-### **For LLM Development**
-**[Complete Guide to Building Fair LLMs with EquiML](Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md)** - A comprehensive guide for building responsible Large Language Models:
-- Understanding LLMs vs traditional ML
+#### **[Complete Guide to Building Fair LLMs with EquiML](docs/guides/Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md)**
+*1,887 lines | For LLM development*
+- Understanding LLMs vs traditional ML models
 - 6-phase fair LLM development framework
 - Bias detection and mitigation for text generation
 - Production-scale LLM training considerations
 - Real-time monitoring for language models
-- Complete code examples for fair LLM development
+- Complete implementation examples
 
-### **Original Tutorial**
-**[Beginner's Tutorial](Beginners_Tutorial_for_Using_EquiML.md)** - The original tutorial covering basic EquiML usage.
+#### **[Complete Guide to Fine-Tuning LLMs with LoRA and EquiML](docs/guides/Complete_Guide_to_Fine_Tuning_LLMs_with_LoRA_and_EquiML.md)**
+*2,533 lines | For LoRA fine-tuning*
+- Comprehensive LoRA fine-tuning tutorial for Llama, Mistral, and other open-source LLMs
+- Hardware requirements and cloud alternatives
+- Memory optimization for consumer GPUs (RTX 4090/3090)
+- Fair dataset creation and bias analysis
+- Production deployment with API server
+- Complete working code for every step
+
+### **🎯 Quick References**
+- **[Original Beginner's Tutorial](Beginners_Tutorial_for_Using_EquiML.md)** - Basic EquiML usage tutorial
+- **[Installation Guide](#installation)** - Quick setup instructions below
+- **[API Reference](src/)** - Source code documentation
 
 ## Project Structure
 EquiML's enhanced architecture includes:
@@ -242,9 +256,11 @@ EquiML's enhanced architecture includes:
 - **`mypy.ini`**: Type checking configuration for improved code quality.
 
 ### **Documentation**
-- **`Complete_Beginners_Guide_to_EquiML.md`**: Comprehensive guide for traditional ML with EquiML.
-- **`Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md`**: Complete guide for fair Large Language Model development.
-- **`Beginners_Tutorial_for_Using_EquiML.md`**: Original tutorial for basic usage.
+- **`docs/guides/`**: Comprehensive learning guides and tutorials
+  - `Complete_Beginners_Guide_to_EquiML.md` - Traditional ML guide (1,028 lines)
+  - `Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md` - LLM development guide (1,887 lines)
+  - `Complete_Guide_to_Fine_Tuning_LLMs_with_LoRA_and_EquiML.md` - LoRA fine-tuning guide (2,533 lines)
+- **`Beginners_Tutorial_for_Using_EquiML.md`**: Original basic tutorial
 
 ### **Testing & Examples**
 - **`tests/`**: Unit tests, sample datasets (adult.csv), and test utilities.
