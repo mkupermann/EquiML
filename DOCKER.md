@@ -8,27 +8,27 @@ EquiML provides multiple Docker images optimized for different use cases:
 
 | Image | Purpose | Size | Use Case |
 |-------|---------|------|----------|
-| `equiml/core` | General purpose | ~2GB | CLI usage, scripts |
-| `equiml/dev` | Development | ~3GB | Development with Jupyter |
-| `equiml/prod` | Production | ~1GB | Production deployment |
-| `equiml/jupyter` | Research | ~2.5GB | Research and notebooks |
-| `equiml/demo` | Web demo | ~1.5GB | Live demo application |
+| `mkupermann/equiml` | General purpose | ~3GB | CLI usage, scripts |
+| `mkupermann/equiml-dev` | Development | ~2.5GB | Development with Jupyter |
+| `mkupermann/equiml-prod` | Production | ~1.8GB | Production deployment |
+| `mkupermann/equiml-jupyter` | Research | ~6.2GB | Research and notebooks |
+| `mkupermann/equiml-demo` | Web demo | ~2.5GB | Live demo application |
 
 ## Quick Start
 
 ### **Option 1: Try EquiML Instantly**
 ```bash
 # Run EquiML with interactive shell
-docker run -it --rm equiml/core bash
+docker run -it --rm mkupermann/equiml bash
 
 # Inside container:
-python -c "import equiml; print('EquiML ready!')"
+python -c "from src.data import Data; print('EquiML ready!')"
 ```
 
 ### **Option 2: Run Jupyter Environment**
 ```bash
 # Start Jupyter Lab with EquiML
-docker run -p 8888:8888 --rm equiml/jupyter
+docker run -p 8888:8888 --rm mkupermann/equiml-jupyter
 
 # Open browser to: http://localhost:8888
 # All EquiML examples and tutorials included!
@@ -37,7 +37,7 @@ docker run -p 8888:8888 --rm equiml/jupyter
 ### **Option 3: Run Web Demo**
 ```bash
 # Start web demo locally
-docker run -p 8501:8501 --rm equiml/demo
+docker run -p 8501:8501 --rm mkupermann/equiml-demo
 
 # Open browser to: http://localhost:8501
 # Upload datasets and get instant bias analysis!
@@ -65,7 +65,7 @@ docker-compose -f docker-compose.dev.yml up -d
 docker run -it --rm \
   -p 8888:8888 \
   -v $(pwd):/app \
-  equiml/dev
+  mkupermann/equiml-dev
 ```
 
 ## Production Deployment
@@ -100,10 +100,10 @@ docker-compose up -d
 aws ecs create-service --cluster equiml --service-name equiml-web --task-definition equiml:1
 
 # Google Cloud Run
-gcloud run deploy equiml --image gcr.io/your-project/equiml/prod:latest
+gcloud run deploy equiml --image gcr.io/your-project/mkupermann/equiml-prod:latest
 
 # Azure Container Instances
-az container create --resource-group equiml --name equiml --image equiml/prod:latest
+az container create --resource-group equiml --name equiml --image mkupermann/equiml-prod:latest
 ```
 
 ## Building Images
@@ -118,20 +118,20 @@ chmod +x docker/build.sh
 ### **Build Individual Images**
 ```bash
 # Core image
-docker build -t equiml/core:latest .
+docker build -t mkupermann/equiml:latest .
 
 # Development image
-docker build -t equiml/dev:latest -f Dockerfile.dev .
+docker build -t mkupermann/equiml-dev:latest -f Dockerfile.dev .
 
 # Production image
-docker build -t equiml/prod:latest -f Dockerfile.prod .
+docker build -t mkupermann/equiml-prod:latest -f Dockerfile.prod .
 
 # Jupyter image
-docker build -t equiml/jupyter:latest -f Dockerfile.jupyter .
+docker build -t mkupermann/equiml-jupyter:latest -f Dockerfile.jupyter .
 
 # Web demo
 cd examples/web_demo
-docker build -t equiml/demo:latest .
+docker build -t mkupermann/equiml-demo:latest .
 ```
 
 ## Testing Images
@@ -199,7 +199,7 @@ REDIS_PASSWORD=your_redis_password
 docker run --gpus all -p 8888:8888 \
   -v ./data:/home/jovyan/work/data \
   -v ./experiments:/home/jovyan/work/experiments \
-  equiml/jupyter
+  mkupermann/equiml-jupyter
 ```
 
 ### ** Production API**
@@ -209,7 +209,7 @@ docker run -d --name equiml-api \
   -p 8000:8000 \
   -v ./data:/app/data:ro \
   -v ./outputs:/app/outputs \
-  equiml/prod \
+  mkupermann/equiml-prod \
   python -m uvicorn api:app --host 0.0.0.0 --port 8000
 ```
 
@@ -219,7 +219,7 @@ docker run -d --name equiml-api \
 docker run --rm \
   -v ./datasets:/app/data \
   -v ./results:/app/outputs \
-  equiml/core \
+  mkupermann/equiml \
   python examples/scripts/quick_bias_check.py /app/data/dataset.csv --target outcome --sensitive gender race
 ```
 
@@ -229,7 +229,7 @@ docker run --rm \
 docker run -d --name equiml-demo \
   -p 80:8501 \
   -e STREAMLIT_SERVER_HEADLESS=true \
-  equiml/demo
+  mkupermann/equiml-demo
 ```
 
 ## Performance Optimization
@@ -237,7 +237,7 @@ docker run -d --name equiml-demo \
 ### **Memory Optimization**
 ```bash
 # Limit memory usage
-docker run --memory=4g --memory-swap=4g equiml/core
+docker run --memory=4g --memory-swap=4g mkupermann/equiml
 
 # Use smaller base image for production
 # (Already optimized in Dockerfile.prod)
@@ -246,7 +246,7 @@ docker run --memory=4g --memory-swap=4g equiml/core
 ### **CPU Optimization**
 ```bash
 # Limit CPU usage
-docker run --cpus=2.0 equiml/core
+docker run --cpus=2.0 mkupermann/equiml
 
 # Use multi-stage builds for smaller images
 # (Implemented in production Dockerfile)
@@ -256,7 +256,7 @@ docker run --cpus=2.0 equiml/core
 ```bash
 # Use custom network for better performance
 docker network create equiml-net
-docker run --network equiml-net equiml/core
+docker run --network equiml-net mkupermann/equiml
 ```
 
 ## Monitoring & Logging
@@ -301,10 +301,10 @@ docker exec equiml-core python -c "import equiml; print('Healthy')"
 #### **Out of Memory**
 ```bash
 # Increase memory limit
-docker run --memory=8g equiml/core
+docker run --memory=8g mkupermann/equiml
 
 # Use production image (smaller)
-docker run equiml/prod
+docker run mkupermann/equiml-prod
 ```
 
 #### **Import Errors**
@@ -313,13 +313,13 @@ docker run equiml/prod
 docker exec equiml-core python -c "import sys; print(sys.path)"
 
 # Rebuild image
-docker build --no-cache -t equiml/core .
+docker build --no-cache -t mkupermann/equiml .
 ```
 
 #### **Permission Issues**
 ```bash
 # Run as current user
-docker run --user $(id -u):$(id -g) equiml/core
+docker run --user $(id -u):$(id -g) mkupermann/equiml
 
 # Fix volume permissions
 sudo chown -R $(id -u):$(id -g) ./data ./outputs
@@ -328,13 +328,13 @@ sudo chown -R $(id -u):$(id -g) ./data ./outputs
 ### **Debug Mode**
 ```bash
 # Run with debug shell
-docker run -it --rm equiml/core bash
+docker run -it --rm mkupermann/equiml bash
 
 # Check installed packages
-docker run --rm equiml/core pip list
+docker run --rm mkupermann/equiml pip list
 
 # Verbose build
-docker build --progress=plain -t equiml/core .
+docker build --progress=plain -t mkupermann/equiml .
 ```
 
 ## Security
@@ -351,7 +351,7 @@ docker build --progress=plain -t equiml/core .
 echo "password" | docker secret create db_password -
 
 # Use environment files
-docker run --env-file .env equiml/prod
+docker run --env-file .env mkupermann/equiml-prod
 ```
 
 ## Registry & Distribution
@@ -359,7 +359,7 @@ docker run --env-file .env equiml/prod
 ### **Docker Hub**
 ```bash
 # Tag for Docker Hub
-docker tag equiml/core:latest mkupermann/equiml:latest
+docker tag mkupermann/equiml:latest mkupermann/equiml:latest
 
 # Push to Docker Hub
 docker push mkupermann/equiml:latest
@@ -368,7 +368,7 @@ docker push mkupermann/equiml:latest
 ### **GitHub Container Registry**
 ```bash
 # Tag for GitHub
-docker tag equiml/core:latest ghcr.io/mkupermann/equiml:latest
+docker tag mkupermann/equiml:latest ghcr.io/mkupermann/equiml:latest
 
 # Push to GitHub
 docker push ghcr.io/mkupermann/equiml:latest
@@ -377,7 +377,7 @@ docker push ghcr.io/mkupermann/equiml:latest
 ### **Private Registry**
 ```bash
 # Tag for private registry
-docker tag equiml/core:latest your-registry.com/equiml:latest
+docker tag mkupermann/equiml:latest your-registry.com/equiml:latest
 
 # Push to private registry
 docker push your-registry.com/equiml:latest
