@@ -38,13 +38,13 @@ chmod +x deploy.sh
 - Social media integration
 - Public verification system
 
-### 📤 **Social Sharing**
+### **Social Sharing**
 - One-click Twitter sharing
 - LinkedIn post templates
 - Embeddable badges
 - Viral marketing features
 
-### 📈 **Live Analytics**
+### **Live Analytics**
 - Global usage statistics
 - Real-time bias trends
 - Community activity feed
