@@ -377,10 +377,10 @@ Production-ready web application for **equiml.ai** featuring:
 - One-click deployment with Docker
 
 #### **Comprehensive Guides** (`docs/guides/`)
-Complete learning resources totaling **5,448 lines** of documentation:
-- **Beginner's Guide**: Traditional ML with fairness (1,028 lines)
-- **LLM Development Guide**: Building fair language models (1,887 lines)
-- **LoRA Fine-Tuning Guide**: Efficient LLM customization (2,533 lines)
+Complete learning resources totaling of documentation:
+- **Beginner's Guide**: Traditional ML with fairness 
+- **LLM Development Guide**: Building fair language models
+- **LoRA Fine-Tuning Guide**: Efficient LLM customization
 
 #### **Docker Support** (`docker/`, `Dockerfile*`)
 Complete containerization solution:
