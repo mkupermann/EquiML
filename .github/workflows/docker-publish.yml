@@ -56,6 +56,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -67,7 +68,7 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-${{ matrix.image.name }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.image.name }}
+            ${{ secrets.DOCKERHUB_USERNAME && format('{0}/{1}', secrets.DOCKERHUB_USERNAME, matrix.image.name) || '' }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -79,7 +80,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.image.context }}
-          file: ${{ matrix.image.dockerfile }}
+          file: ${{ matrix.image.context }}/${{ matrix.image.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -87,7 +88,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Update repository description
-        if: matrix.image.name == 'equiml-demo'
+        if: matrix.image.name == 'equiml-demo' && secrets.DOCKERHUB_USERNAME != ''
         uses: peter-evans/dockerhub-description@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}

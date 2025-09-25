@@ -1,0 +1,38 @@
+FROM python:3.11-slim AS builder
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --user -r requirements.txt
+
+FROM python:3.11-slim
+
+LABEL maintainer="EquiML Team"
+LABEL description="EquiML Production Container - Optimized for deployment"
+
+RUN useradd -m -u 1000 equiml && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /root/.local /home/equiml/.local
+
+COPY --chown=equiml:equiml . .
+
+USER equiml
+
+ENV PATH=/home/equiml/.local/bin:$PATH
+ENV PYTHONPATH=/app:$PYTHONPATH
+ENV EQUIML_ENV=production
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import src; print('Health check passed')" || exit 1
+
+EXPOSE 8000
+
+CMD ["python", "-m", "src"]

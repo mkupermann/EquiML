@@ -105,8 +105,8 @@ models/
 checkpoints/
 
 # Docker temporary files
-Dockerfile.*
 !Dockerfile
+!Dockerfile.*
 !examples/web_demo/Dockerfile
 docker-compose.*.yml
 !docker-compose.yml

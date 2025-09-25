@@ -1,0 +1,35 @@
+FROM jupyter/scipy-notebook:latest
+
+LABEL maintainer="EquiML Team"
+LABEL description="EquiML Jupyter Notebook Container with pre-installed examples and tutorials"
+
+USER root
+
+RUN apt-get update && apt-get install -y \
+    graphviz \
+    && rm -rf /var/lib/apt/lists/*
+
+USER $NB_UID
+
+WORKDIR /home/jovyan/work
+
+COPY --chown=${NB_UID}:${NB_GID} requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir \
+    ipywidgets \
+    plotly \
+    seaborn \
+    graphviz
+
+COPY --chown=${NB_UID}:${NB_GID} . .
+
+RUN pip install --no-cache-dir -e .
+
+RUN jupyter nbextension enable --py widgetsnbextension
+
+ENV PYTHONPATH=/home/jovyan/work:$PYTHONPATH
+ENV EQUIML_ENV=jupyter
+
+EXPOSE 8888
+
+CMD ["start-notebook.sh", "--NotebookApp.token=''", "--NotebookApp.password=''"]
