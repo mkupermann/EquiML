@@ -70,7 +70,7 @@ Homepage = "https://github.com/mkupermann/EquiML"
 "Source" = "https://github.com/mkupermann/EquiML"
 
 [project.scripts]
-equiml-app = "src.streamlit_app:main"
+equiml-app = "equiml.streamlit_app:main"
 
 [tool.black]
 line-length = 88

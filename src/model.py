@@ -2,13 +2,10 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-import xgboost as xgb
-import lightgbm as lgb
 from sklearn.model_selection import cross_validate, StratifiedKFold, cross_val_score
 from fairlearn.reductions import ExponentiatedGradient, DemographicParity, EqualizedOdds
 import logging
 from typing import Optional, Dict, Any
-import optuna
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +70,23 @@ class Model:
                 oob_score=True     # Out-of-bag scoring
             )
         elif self.algorithm == 'xgboost':
+            try:
+                import xgboost as xgb
+            except ImportError as e:
+                raise ImportError(
+                    "Algorithm 'xgboost' requires the 'xgboost' package. "
+                    "Install with: pip install 'equiml[full]'"
+                ) from e
             return xgb.XGBClassifier(random_state=42, verbosity=0)
         elif self.algorithm == 'robust_xgboost':
             # XGBoost with regularization for stability
+            try:
+                import xgboost as xgb
+            except ImportError as e:
+                raise ImportError(
+                    "Algorithm 'robust_xgboost' requires the 'xgboost' package. "
+                    "Install with: pip install 'equiml[full]'"
+                ) from e
             return xgb.XGBClassifier(
                 n_estimators=100,
                 max_depth=6,       # Limit tree depth
@@ -85,12 +96,26 @@ class Model:
                 reg_alpha=0.1,     # L1 regularization
                 reg_lambda=1.0,    # L2 regularization
                 random_state=42,
-                verbosity=0
+                verbosity=0,
             )
         elif self.algorithm == 'lightgbm':
+            try:
+                import lightgbm as lgb
+            except ImportError as e:
+                raise ImportError(
+                    "Algorithm 'lightgbm' requires the 'lightgbm' package. "
+                    "Install with: pip install 'equiml[full]'"
+                ) from e
             return lgb.LGBMClassifier(random_state=42, verbosity=-1)
         elif self.algorithm == 'robust_lightgbm':
             # LightGBM with regularization
+            try:
+                import lightgbm as lgb
+            except ImportError as e:
+                raise ImportError(
+                    "Algorithm 'robust_lightgbm' requires the 'lightgbm' package. "
+                    "Install with: pip install 'equiml[full]'"
+                ) from e
             return lgb.LGBMClassifier(
                 n_estimators=100,
                 max_depth=6,
@@ -100,7 +125,7 @@ class Model:
                 reg_alpha=0.1,
                 reg_lambda=1.0,
                 random_state=42,
-                verbosity=-1
+                verbosity=-1,
             )
         elif self.algorithm == 'ensemble':
             return self._create_ensemble_model()
@@ -136,45 +161,46 @@ class Model:
         estimators = [
             ('lr', LogisticRegression(solver='liblinear', random_state=42)),
             ('rf', RandomForestClassifier(n_estimators=100, random_state=42)),
-            ('xgb', xgb.XGBClassifier(random_state=42, verbosity=0))
         ]
+
+        try:
+            import xgboost as xgb
+
+            estimators.append(('xgb', xgb.XGBClassifier(random_state=42, verbosity=0)))
+        except ImportError:
+            logger.warning("xgboost not available; ensemble will exclude XGBoost component.")
 
         return VotingClassifier(estimators=estimators, voting='soft')
 
-    def tune_hyperparameters(self, X_train: pd.DataFrame, y_train: pd.Series,
-                           method: str = 'optuna', n_trials: int = 100) -> None:
-        """
-        Perform hyperparameter tuning for the model.
+    def tune_hyperparameters(
+        self,
+        X_train: pd.DataFrame,
+        y_train: pd.Series,
+        method: str = 'optuna',
+        n_trials: int = 100,
+    ) -> None:
+        """Perform hyperparameter tuning for the model.
 
-        Args:
-            X_train: Training features
-            y_train: Training targets
-            method: Tuning method ('optuna', 'grid_search', 'random_search')
-            n_trials: Number of trials for Optuna
+        Currently only 'optuna' is implemented.
         """
+        if method != 'optuna':
+            raise ValueError(f"Only 'optuna' tuning is implemented at the moment (got '{method}')")
+
         try:
-            if method == 'optuna':
-                self._tune_with_optuna(X_train, y_train, n_trials)
-            elif method == 'grid_search':
-                self._tune_with_grid_search(X_train, y_train)
-            elif method == 'random_search':
-                self._tune_with_random_search(X_train, y_train)
-            else:
-                raise ValueError(f"Unsupported tuning method: {method}")
-            logger.info(f"Hyperparameter tuning completed using {method}")
-        except Exception as e:
-            logger.error(f"Hyperparameter tuning failed: {str(e)}")
-            raise
+            import optuna
+        except ImportError as e:
+            raise ImportError(
+                "Hyperparameter tuning with 'optuna' requires the 'optuna' package. "
+                "Install with: pip install 'equiml[full]'"
+            ) from e
 
-    def _tune_with_optuna(self, X_train: pd.DataFrame, y_train: pd.Series, n_trials: int) -> None:
-        """Tune hyperparameters using Optuna."""
         def objective(trial):
             if self.algorithm == 'logistic_regression':
                 params = {
                     'C': trial.suggest_float('C', 1e-4, 1e2, log=True),
                     'penalty': trial.suggest_categorical('penalty', ['l1', 'l2']),
                     'solver': 'liblinear',
-                    'random_state': 42
+                    'random_state': 42,
                 }
                 model = LogisticRegression(**params)
             elif self.algorithm == 'random_forest':
@@ -182,37 +208,41 @@ class Model:
                     'n_estimators': trial.suggest_int('n_estimators', 50, 300),
                     'max_depth': trial.suggest_int('max_depth', 3, 20),
                     'min_samples_split': trial.suggest_int('min_samples_split', 2, 10),
-                    'random_state': 42
+                    'random_state': 42,
                 }
                 model = RandomForestClassifier(**params)
             elif self.algorithm == 'xgboost':
+                import xgboost as xgb
+
                 params = {
                     'n_estimators': trial.suggest_int('n_estimators', 50, 300),
                     'max_depth': trial.suggest_int('max_depth', 3, 10),
                     'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3),
                     'subsample': trial.suggest_float('subsample', 0.6, 1.0),
                     'random_state': 42,
-                    'verbosity': 0
+                    'verbosity': 0,
                 }
                 model = xgb.XGBClassifier(**params)
             else:
                 raise ValueError(f"Optuna tuning not implemented for {self.algorithm}")
 
-            # Cross-validation score
             scores = cross_val_score(model, X_train, y_train, cv=5, scoring='accuracy')
             return scores.mean()
 
         study = optuna.create_study(direction='maximize')
         study.optimize(objective, n_trials=n_trials)
 
-        # Update model with best parameters
         best_params = study.best_params
         if self.algorithm == 'logistic_regression':
             self.model = LogisticRegression(**best_params)
         elif self.algorithm == 'random_forest':
             self.model = RandomForestClassifier(**best_params)
         elif self.algorithm == 'xgboost':
+            import xgboost as xgb
+
             self.model = xgb.XGBClassifier(**best_params)
+
+        return best_params
 
     def _tune_with_grid_search(self, X_train: pd.DataFrame, y_train: pd.Series) -> None:
         """Tune hyperparameters using GridSearchCV."""
@@ -657,56 +687,6 @@ class Model:
         else:
             raise AttributeError("Model does not have a predict_proba method.")
 
-    def tune_hyperparameters(self, X_train, y_train, n_trials=50):
-        """
-        Tunes hyperparameters for the model using Optuna.
-
-        Args:
-            X_train (pd.DataFrame): Training feature data.
-            y_train (pd.Series): Training target data.
-            n_trials (int): The number of optimization trials.
-
-        Returns:
-            dict: The best hyperparameters found.
-        """
-        def objective(trial):
-            if self.algorithm == 'logistic_regression':
-                C = trial.suggest_float('C', 1e-5, 1e2, log=True)
-                solver = trial.suggest_categorical('solver', ['liblinear', 'saga'])
-                model = LogisticRegression(C=C, solver=solver, random_state=42)
-            elif self.algorithm == 'random_forest':
-                n_estimators = trial.suggest_int('n_estimators', 10, 1000)
-                max_depth = trial.suggest_int('max_depth', 2, 32, log=True)
-                model = RandomForestClassifier(n_estimators=n_estimators, max_depth=max_depth, random_state=42)
-            elif self.algorithm == 'xgboost':
-                param = {
-                    'objective': 'binary:logistic',
-                    'eval_metric': 'logloss',
-                    'eta': trial.suggest_float('eta', 1e-8, 1.0, log=True),
-                    'max_depth': trial.suggest_int('max_depth', 1, 10),
-                }
-                model = xgb.XGBClassifier(**param, random_state=42)
-            elif self.algorithm == 'lightgbm':
-                param = {
-                    'objective': 'binary',
-                    'metric': 'binary_logloss',
-                    'n_estimators': trial.suggest_int('n_estimators', 10, 1000),
-                    'learning_rate': trial.suggest_float('learning_rate', 1e-8, 1.0, log=True),
-                }
-                model = lgb.LGBMClassifier(**param, random_state=42)
-
-            # Using cross_val_score for robust evaluation
-            score = cross_val_score(model, X_train, y_train, n_jobs=-1, cv=3).mean()
-            return score
-
-        study = optuna.create_study(direction='maximize')
-        study.optimize(objective, n_trials=n_trials)
-
-        # Set the model to the best estimator
-        self.model.set_params(**study.best_params)
-
-        logger.info(f"Best hyperparameters for {self.algorithm}: {study.best_params}")
-        return study.best_params
 
     def cross_validate(self, X, y, sensitive_features=None, cv=5):
         """

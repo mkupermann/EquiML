@@ -6,14 +6,33 @@ from sklearn.impute import SimpleImputer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import PCA
 from scipy import stats
-import arff
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 import string
-import cv2  # For image data support
 import logging
 from typing import List, Optional, Tuple, Union
+
+# Optional dependencies - gracefully handle missing packages
+try:
+    import arff
+except ImportError:
+    arff = None
+
+try:
+    import nltk
+    from nltk.corpus import stopwords
+    from nltk.tokenize import word_tokenize
+    _NLTK_AVAILABLE = True
+except ImportError:
+    nltk = None
+    stopwords = None
+    word_tokenize = None
+    _NLTK_AVAILABLE = False
+
+try:
+    import cv2
+    _CV2_AVAILABLE = True
+except ImportError:
+    cv2 = None
+    _CV2_AVAILABLE = False
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -103,6 +122,8 @@ class Data:
             elif self.dataset_path.endswith('.parquet'):
                 self.df = pd.read_parquet(self.dataset_path)
             elif self.dataset_path.endswith('.arff'):
+                if arff is None:
+                    raise ImportError("ARFF support requires 'liac-arff'. Install with: pip install liac-arff")
                 with open(self.dataset_path, 'r') as f:
                     data = arff.load(f)
                 self.df = pd.DataFrame(data['data'], columns=[attr[0] for attr in data['attributes']])
@@ -200,6 +221,9 @@ class Data:
         Returns:
             str: Cleaned text.
         """
+        if not _NLTK_AVAILABLE:
+            logger.warning("NLTK not available. Install with: pip install nltk")
+            return str(text).lower()
         try:
             _setup_nltk()  # Ensure NLTK data is available
             text = str(text).lower()
@@ -222,6 +246,8 @@ class Data:
         Returns:
             np.ndarray: Flattened image data.
         """
+        if not _CV2_AVAILABLE:
+            raise ImportError("Image processing requires 'opencv-python'. Install with: pip install opencv-python")
         processed_images = []
         for path in image_paths:
             try:
@@ -309,7 +335,7 @@ class Data:
             raise ValueError("Data not preprocessed. Call preprocess() first.")
         
         numerical_cols = self.X.select_dtypes(include=[np.number]).columns
-        if not numerical_cols.any():
+        if len(numerical_cols) == 0:
             raise ValueError("No numerical columns found for feature engineering.")
         
         poly = PolynomialFeatures(degree=polynomial_degree, interaction_only=interaction_only)

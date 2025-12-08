@@ -55,7 +55,7 @@ EquiML provides a comprehensive set of responsible AI tools:
 - **Traditional Algorithms**: Logistic Regression with L1/L2/ElasticNet regularization, Random Forest, XGBoost, LightGBM.
 - **Robust Variants**: Enhanced algorithms with stability improvements (robust_random_forest, robust_xgboost, robust_ensemble).
 - **Ensemble Methods**: Voting classifiers, bagging, and diverse estimator combinations for improved robustness.
-- **Hyperparameter Tuning**: Automated optimization using Optuna, GridSearchCV, and RandomSearchCV.
+- **Hyperparameter Tuning**: Automated optimization using Optuna (Grid/Random search planned).
 
 ### **Model Stability & Robustness**
 - **Stability Improvements**: Comprehensive methods to reduce model variance and improve reliability.
@@ -207,6 +207,127 @@ fair_predictions = model.apply_fairness_postprocessing(X_test, sensitive_feature
 
 This demonstrates EquiML's complete pipeline: enhanced preprocessing, robust training, comprehensive evaluation, real-time monitoring, and detailed actionable reporting.
 
+## Recommended Pipeline
+
+EquiML is designed around a clear end-to-end workflow:
+
+1. **Load & preprocess data**
+2. **Mitigate bias and handle class imbalance**
+3. **Split into train/test**
+4. **Train a fairness-aware, robust model**
+5. **Evaluate performance + fairness + robustness**
+6. **Monitor bias and drift over time**
+
+### 1. Data loading & preprocessing
+
+```python
+from equiml import Data
+
+data = Data(
+    dataset_path="path/to/data.csv",
+    sensitive_features=["sex", "race"],   # columns in your raw dataset
+)
+
+data.load_data()
+
+data.preprocess(
+    target_column="target",
+    numerical_features=[...],
+    categorical_features=[...],
+)
+```
+
+### 2. Bias mitigation & class imbalance
+
+```python
+# Optional but recommended when sensitive_features are provided
+data.apply_bias_mitigation(method="reweighing")       # or 'correlation_removal', 'data_augmentation'
+data.handle_class_imbalance(method="class_weights")   # or 'smote', 'random_oversample', 'random_undersample'
+```
+
+### 3. Train / test split
+
+```python
+data.split_data(test_size=0.2, random_state=42)
+```
+
+### 4. Train a fair, robust model
+
+```python
+from equiml import Model
+
+# Example: robust random forest with demographic parity constraint
+model = Model(
+    algorithm="robust_random_forest",
+    fairness_constraint="demographic_parity",
+)
+
+# Optionally apply extra stability improvements before training
+model.apply_stability_improvements(
+    data.X_train,
+    data.y_train,
+    stability_method="comprehensive",
+)
+
+# Use sensitive columns (e.g. one-hot encoded 'sex_' features) for fairness
+sensitive_train = data.X_train[[c for c in data.X_train.columns if c.startswith("sex_")]].iloc[:, 0]
+
+model.train(
+    data.X_train,
+    data.y_train,
+    sensitive_features=sensitive_train,
+    sample_weight=data.sample_weights_train if data.sample_weights_train is not None else None,
+)
+```
+
+### 5. Evaluation (performance + fairness + robustness)
+
+```python
+from equiml import EquiMLEvaluation
+
+sensitive_test = data.X_test[[c for c in data.X_test.columns if c.startswith("sex_")]].iloc[:, 0]
+
+evaluator = EquiMLEvaluation()
+y_pred = model.predict(data.X_test)
+
+metrics = evaluator.evaluate(
+    model,
+    data.X_test,
+    data.y_test,
+    y_pred=y_pred,
+    sensitive_features=sensitive_test,
+    task="classification",
+)
+
+# Optional: generate HTML report
+evaluator.generate_report(
+    metrics,
+    output_path="evaluation_report.html",
+    template_path="src/report_template.html",
+)
+```
+
+### 6. Monitoring (bias & drift in production)
+
+```python
+from equiml import BiasMonitor, DriftDetector
+import pandas as pd
+
+# Bias monitoring
+monitor = BiasMonitor(sensitive_features=["sex"])
+monitor_result = monitor.monitor_predictions(
+    predictions=y_pred,
+    sensitive_features=pd.DataFrame({"sex": sensitive_test}),
+    true_labels=data.y_test.values,
+)
+
+# Drift detection (use training data as reference)
+drift_detector = DriftDetector(reference_data=data.X_train)
+drift_result = drift_detector.detect_drift(new_data=data.X_test)
+```
+
+This pipeline gives you a default, "blessed" way to use EquiML from raw data to monitored, fairness-aware models. You can customize each step (algorithms, mitigation methods, tuning, visualizations) as needed.
+
 ## Try the Live Demo
 
 **Want to test AI bias instantly?** Visit our live web demo:
@@ -263,7 +384,7 @@ EquiML provides comprehensive documentation for all skill levels and use cases:
 ### **Complete Learning Guides**
 
 #### **[Complete Beginner's Guide to EquiML](docs/guides/Complete_Beginners_Guide_to_EquiML.md)**
-*1,028 lines | For absolute beginners*
+* For absolute beginners*
 - What EquiML does in simple terms with real-world examples
 - Step-by-step installation for all operating systems
 - Your first fair AI model with copy-paste ready code
@@ -273,7 +394,7 @@ EquiML provides comprehensive documentation for all skill levels and use cases:
 - Comprehensive troubleshooting guide
 
 #### **[Complete Guide to Building Fair LLMs with EquiML](docs/guides/Complete_Guide_to_Building_Fair_LLMs_with_EquiML.md)**
-*1,887 lines | For LLM development*
+* For LLM development*
 - Understanding LLMs vs traditional ML models
 - 6-phase fair LLM development framework
 - Bias detection and mitigation for text generation
@@ -282,7 +403,7 @@ EquiML provides comprehensive documentation for all skill levels and use cases:
 - Complete implementation examples
 
 #### **[Complete Guide to Fine-Tuning LLMs with LoRA and EquiML](docs/guides/Complete_Guide_to_Fine_Tuning_LLMs_with_LoRA_and_EquiML.md)**
-*2,533 lines | For LoRA fine-tuning*
+* For LoRA fine-tuning*
 - Comprehensive LoRA fine-tuning tutorial for Llama, Mistral, and other open-source LLMs
 - Hardware requirements and cloud alternatives
 - Memory optimization for consumer GPUs (RTX 4090/3090)
@@ -423,7 +544,7 @@ EquiML is released under the **[MIT License](https://github.com/mkupermann/EquiM
 
 ## Contact
 - **GitHub Issues**: Report bugs or request features at [GitHub Issues](https://github.com/mkupermann/EquiML/issues).
-- **Email**: Contact the maintainer at [mkupermann@kupermann.com](mailto:michael@kupermann.com).
+- **Email**: Contact the maintainer at michael@kupermann.com.
 - **Discussions**: Join the conversation at [GitHub Discussions](https://github.com/mkupermann/EquiML/discussions).
 
 ## Recent Enhancements & Roadmap

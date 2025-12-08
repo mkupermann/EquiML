@@ -1,8 +1,6 @@
 import streamlit as st
 import pandas as pd
-from src.data import Data
-from src.model import Model
-from src.evaluation import EquiMLEvaluation
+from equiml import Data, Model, EquiMLEvaluation
 
 st.title("EquiML: Fair Machine Learning Dashboard")
 
@@ -13,7 +11,22 @@ if uploaded_file:
     
     sensitive_features = st.multiselect("Select sensitive features", df.columns)
     target_column = st.selectbox("Select target column", df.columns)
-    algorithm = st.selectbox("Select algorithm", ['logistic_regression', 'decision_tree', 'random_forest', 'svm'])
+    algorithm = st.selectbox(
+        "Select algorithm",
+        [
+            'logistic_regression',
+            'logistic_regression_l1',
+            'logistic_regression_elastic',
+            'random_forest',
+            'robust_random_forest',
+            'xgboost',
+            'robust_xgboost',
+            'lightgbm',
+            'robust_lightgbm',
+            'ensemble',
+            'robust_ensemble',
+        ],
+    )
     fairness_constraint = st.checkbox("Apply demographic parity constraint")
     
     if st.button("Train and Evaluate"):
@@ -33,8 +46,9 @@ if uploaded_file:
         
         if sensitive_features:
             sensitive_feature = sensitive_features[0]  # Use the first sensitive feature
-            evaluation.plot_fairness_metrics('selection_rate', sensitive_feature=sensitive_feature, kind='bar', save_path='selection_rate.png')
-        st.image('selection_rate.png')
+            if 'group_metrics' in metrics:
+                evaluation.plot_fairness_metrics(metrics, sensitive_feature, filename='selection_rate.png')
+                st.image('selection_rate.png')
 
 def main():
     """Main entry point for the EquiML Streamlit app."""

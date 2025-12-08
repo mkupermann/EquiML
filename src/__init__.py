@@ -7,7 +7,7 @@ machine learning models with built-in bias detection, mitigation, and monitoring
 
 __version__ = "0.2.0"
 __author__ = "Michael Kupermann"
-__email__ = "mkupermann@kupermann.com"
+__email__ = "michael@kupermann.com"
 
 from .data import Data
 from .model import Model
