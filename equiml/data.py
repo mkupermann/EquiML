@@ -34,7 +34,6 @@ except ImportError:
     cv2 = None
     _CV2_AVAILABLE = False
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def _setup_nltk():

@@ -1,48 +1,11 @@
-# Core ML dependencies (essential)
-pandas>=1.5.0
-numpy>=1.21.0
-scikit-learn>=1.1.0
-
-# Fairness and interpretability
-fairlearn>=0.8.0
-shap>=0.40.0
-lime>=0.2.0
-
-# Visualization
-matplotlib>=3.5.0
-seaborn>=0.11.0
-plotly>=5.0.0
-
-# Optional ML libraries (install separately if needed)
-# xgboost>=1.6.0  # Commented out for CI compatibility
-# lightgbm>=3.3.0  # Commented out for CI compatibility
-# optuna>=3.0.0  # Commented out for CI compatibility
-
-# Web interface
-streamlit>=1.20.0
-
-# Data handling
-scipy>=1.9.0
-joblib>=1.1.0
-statsmodels>=0.13.0
-liac-arff>=2.5.0
-openpyxl>=3.0.0
-jinja2>=3.0.0
-
-# Development and testing
-pytest>=7.0.0
-flake8>=4.0.0
-coverage>=6.0.0
-
-# Documentation
-sphinx>=4.0.0
-
-# Optional dependencies (install with pip install equiml[full])
-# opencv-python>=4.5.0
-# nltk>=3.7.0
-# docker>=5.0.0
-# pyarrow>=8.0.0
-# openpyxl>=3.0.0
-# liac-arff>=2.5.0
-# skl2onnx>=1.10.0
-# onnx>=1.12.0
+pandas>=1.5,<3
+numpy>=1.21,<3
+scikit-learn>=1.1,<2
+fairlearn>=0.8,<1
+shap>=0.40,<1
+lime>=0.2,<1
+matplotlib>=3.5,<4
+seaborn>=0.11,<1
+scipy>=1.9,<2
+jinja2>=3.0,<4
+statsmodels>=0.13,<1

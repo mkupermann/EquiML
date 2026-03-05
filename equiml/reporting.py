@@ -170,7 +170,7 @@ def predict_with_monitoring(model, X):
 
     return recommendations
 
-def generate_html_report(metrics, output_path='evaluation_report.html', template_path='src/report_template.html'):
+def generate_html_report(metrics, output_path='evaluation_report.html', template_path=None):
     """
     Generates a comprehensive HTML report from evaluation metrics.
 
@@ -179,6 +179,8 @@ def generate_html_report(metrics, output_path='evaluation_report.html', template
         output_path (str): The path to save the HTML report.
         template_path (str): The path to the Jinja2 template file.
     """
+    if template_path is None:
+        template_path = os.path.join(os.path.dirname(__file__), 'report_template.html')
     template_dir = os.path.dirname(template_path)
     template_name = os.path.basename(template_path)
 
