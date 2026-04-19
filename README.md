@@ -8,6 +8,12 @@ Quick fairness audits for ML datasets from the command line.
 
 EquiML wraps [fairlearn](https://fairlearn.org/), [SHAP](https://shap.readthedocs.io/), and [scikit-learn](https://scikit-learn.org/) into a single pipeline: load data, detect bias, train a fair model, compare results.
 
+## Why EquiML
+
+Most fairness tooling is scattered — one library for metrics, another for constraints, a third for explainability. EquiML is the three-command pipeline I kept rebuilding on every audit. It is opinionated by design: one dataset in, a report out, honest comparison between baseline and fairness-constrained model.
+
+It is not a new algorithm. It is a way to stop copying the same glue code.
+
 ## Install
 
 ```bash
@@ -112,6 +118,13 @@ equiml/
 tests/
   test_audit_pipeline.py
 ```
+
+## Scope and limitations
+
+- Tabular classification only. No text, image, or time-series models.
+- Sensitive features must be declared explicitly — no automatic detection.
+- Fairness metrics assume train and test distributions are i.i.d.
+- The fair model always reduces accuracy. EquiML makes the tradeoff visible; the decision is yours.
 
 ## License
 
