@@ -153,6 +153,12 @@ tests/
 - Assumes train and test are i.i.d. Not appropriate when distributions shift.
 - Tabular classification only. No text, image, time-series, or LLM evaluation.
 
+## About the author
+
+Built by Michael Kupermann at [Kupermann Consulting](https://kupermann.com).
+Companion writing on Medium: [Cortex HDC](URL_HERE), [FIRE Score](URL_HERE).
+Issues, ideas, and collaboration enquiries welcome.
+
 ## License
 
 MIT
