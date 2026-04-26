@@ -74,8 +74,14 @@ class Model:
         if hasattr(self.model, "predict_proba"):
             return self.model.predict_proba(X)
         elif hasattr(self.model, "predictors_"):
-            probas = [p.predict_proba(X) for p in self.model.predictors_]
-            return np.mean(probas, axis=0)
+            # ExponentiatedGradient is a randomised classifier: a correct
+            # predict_proba would sample predictors according to their
+            # weights, not average them. Averaging is mathematically wrong.
+            raise NotImplementedError(
+                "predict_proba is not well-defined for the ExponentiatedGradient "
+                "mitigator; use predict() and report fairness metrics from hard "
+                "predictions only"
+            )
         else:
             raise AttributeError("Model does not support predict_proba.")
 

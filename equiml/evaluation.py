@@ -45,7 +45,7 @@ class EquiMLEvaluation:
         if y_pred_proba is None and task == 'classification':
             try:
                 y_pred_proba = model.predict_proba(X)
-            except (AttributeError, ValueError):
+            except (AttributeError, ValueError, NotImplementedError):
                 y_pred_proba = None
 
         metrics = {}
