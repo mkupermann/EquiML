@@ -73,6 +73,10 @@ def main() -> None:
     if not csv_path.exists():
         print("Fetching UCI Adult dataset...")
         df = fetch_adult()
+        # Subsample for a fast demo. The full ~30k-row Adult set makes
+        # SHAP slow on commodity hardware; 5k rows preserves enough
+        # signal for the fairness metrics to surface real disparity.
+        df = df.sample(n=5000, random_state=42).reset_index(drop=True)
         df.to_csv(csv_path, index=False)
         print(f"  wrote {csv_path} ({len(df)} rows)")
 
