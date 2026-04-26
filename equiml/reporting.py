@@ -170,14 +170,18 @@ def predict_with_monitoring(model, X):
 
     return recommendations
 
-def generate_html_report(metrics, output_path='evaluation_report.html', template_path=None):
+def generate_html_report(metrics, output_path='evaluation_report.html', template_path=None, fair_metrics=None):
     """
-    Generates a comprehensive HTML report from evaluation metrics.
+    Generates an HTML report from evaluation metrics.
 
     Args:
-        metrics (dict): A dictionary containing the evaluation metrics.
+        metrics (dict): Baseline evaluation metrics.
         output_path (str): The path to save the HTML report.
         template_path (str): The path to the Jinja2 template file.
+        fair_metrics (dict, optional): Fairness-mitigated model metrics. When
+            provided, the report renders a baseline-vs-fair comparison block at
+            the top of the Fairness Metrics section. When None, the report
+            renders the existing single-column layout (backward compatible).
     """
     if template_path is None:
         template_path = os.path.join(os.path.dirname(__file__), 'report_template.html')
@@ -187,11 +191,12 @@ def generate_html_report(metrics, output_path='evaluation_report.html', template
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template(template_name)
 
-    # Generate detailed recommendations
+    # Recommendations are based on baseline metrics only — keep this simple.
     recommendations = generate_detailed_recommendations(metrics)
 
     html_content = template.render(
         metrics=metrics,
+        fair_metrics=fair_metrics,
         recommendations=recommendations,
         timestamp=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     )
