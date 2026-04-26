@@ -1,3 +1,7 @@
+<!-- TODO(maintainer): update the GitHub repo "About" description (set in
+     the GitHub UI, not here) to: "A focused CLI for fairness audits on
+     tabular ML — wraps fairlearn, scikit-learn, and SHAP." -->
+
 # EquiML
 
 [![CI](https://github.com/mkupermann/EquiML/actions/workflows/ci.yml/badge.svg)](https://github.com/mkupermann/EquiML/actions/workflows/ci.yml)
@@ -7,6 +11,11 @@
 Quick fairness audits for ML datasets from the command line.
 
 EquiML wraps [fairlearn](https://fairlearn.org/), [SHAP](https://shap.readthedocs.io/), and [scikit-learn](https://scikit-learn.org/) into a single pipeline: load data, detect bias, train a fair model, compare results.
+
+<!-- TODO(maintainer): two sentences in your own voice. Why fairness, why now,
+     what client pattern made you tired of rebuilding this glue. Don't
+     ghostwrite this paragraph — it either lands as conviction or it
+     weakens the rest of the README. -->
 
 ## Why EquiML
 
