@@ -160,6 +160,21 @@ def cmd_audit(args: argparse.Namespace) -> None:
     # Save JSON output
     if output_json:
         serializable = _make_serializable({"baseline": metrics, "fair": fair_metrics})
+        import platform
+        import sklearn
+        import fairlearn
+        from . import __version__ as equiml_version
+        serializable["_meta"] = {
+            "equiml_version": equiml_version,
+            "python_version": platform.python_version(),
+            "sklearn_version": sklearn.__version__,
+            "fairlearn_version": fairlearn.__version__,
+            "random_seed": 42,
+            "dataset_path": dataset_path,
+            "target": target,
+            "sensitive_features": sensitive_cols,
+            "algorithm": algorithm,
+        }
         with open(output_json, "w") as f:
             json.dump(serializable, f, indent=2, default=str)
         print(f"\nDetailed results saved to {output_json}")
