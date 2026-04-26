@@ -88,7 +88,7 @@ drift = detector.detect_drift(new_data)
 
 ## What it does
 
-1. **Bias Detection** - Measures demographic parity, equalized odds, and disparate impact across sensitive groups
+1. **Bias Detection** - Surfaces fairness metrics (demographic parity, equalized odds, disparate impact) across sensitive groups. You decide whether the disparity is acceptable for your domain — the tool reports numbers, not verdicts.
 2. **Fair Training** - Trains models with fairness constraints using fairlearn's ExponentiatedGradient
 3. **Comparison** - Shows baseline vs. fair model side-by-side so you see the accuracy/fairness tradeoff
 4. **Explainability** - SHAP and LIME explanations for model decisions
