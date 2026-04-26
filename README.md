@@ -106,6 +106,15 @@ This is an opinionated pipeline, not a new algorithm. The actual ML work is done
 | ML models | [scikit-learn](https://scikit-learn.org/) |
 | Statistical tests | [scipy](https://scipy.org/), [statsmodels](https://www.statsmodels.org/) |
 
+## How EquiML compares to fairlearn / aif360 / Aequitas
+
+- **[fairlearn](https://fairlearn.org/)** is the underlying library. EquiML's job is to be a CLI you can pipe into CI; fairlearn is the toolbox you build with.
+- **[aif360](https://aif360.res.ibm.com/)** (IBM) has a broader algorithm catalogue, a heavier install, and a more academic shape. Choose aif360 if you need pre-, in-, and post-processing variety beyond `ExponentiatedGradient` and reweighing.
+- **[Aequitas](http://www.datasciencepublicpolicy.org/our-work/tools-guides/aequitas/)** (CMU/DSSG) is policy-audit-shaped, with group-disparity dashboards. It is often the right pick for public-sector audits.
+- **EquiML** is an opinionated three-command pipeline, single-author, built for a specific audit cadence — not a research toolkit.
+
+If you don't already know which of these you need, you probably need fairlearn or Aequitas, not EquiML.
+
 ## Supported algorithms
 
 - `logistic_regression` (default)
