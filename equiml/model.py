@@ -74,13 +74,28 @@ class Model:
         if hasattr(self.model, "predict_proba"):
             return self.model.predict_proba(X)
         elif hasattr(self.model, "predictors_"):
-            probas = [p.predict_proba(X) for p in self.model.predictors_]
-            return np.mean(probas, axis=0)
+            # ExponentiatedGradient is a randomised classifier: a correct
+            # predict_proba would sample predictors according to their
+            # weights, not average them. Averaging is mathematically wrong.
+            raise NotImplementedError(
+                "predict_proba is not well-defined for the ExponentiatedGradient "
+                "mitigator; use predict() and report fairness metrics from hard "
+                "predictions only"
+            )
         else:
             raise AttributeError("Model does not support predict_proba.")
 
     def cross_validate(self, X, y, sensitive_features=None, cv=5) -> dict:
-        """Cross-validate the model."""
+        """Cross-validate the model.
+
+        Not supported for fairness-constrained models: silently dropping the
+        constraint and CV-ing the unconstrained estimator would be misleading.
+        """
+        if hasattr(self.model, "predictors_") or hasattr(self.model, "_estimator"):
+            raise NotImplementedError(
+                "cross_validate is not supported for fairness-constrained "
+                "models in this version; use the unconstrained baseline for "
+                "CV scores"
+            )
         scoring = ["accuracy", "precision_weighted", "recall_weighted", "f1_weighted"]
-        estimator = self.model.estimator if hasattr(self.model, "estimator") else self.model
-        return cross_validate(estimator, X, y, cv=cv, scoring=scoring)
+        return cross_validate(self.model, X, y, cv=cv, scoring=scoring)

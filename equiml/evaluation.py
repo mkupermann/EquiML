@@ -45,7 +45,7 @@ class EquiMLEvaluation:
         if y_pred_proba is None and task == 'classification':
             try:
                 y_pred_proba = model.predict_proba(X)
-            except (AttributeError, ValueError):
+            except (AttributeError, ValueError, NotImplementedError):
                 y_pred_proba = None
 
         metrics = {}
@@ -171,13 +171,18 @@ class EquiMLEvaluation:
     def compute_robustness_metrics(self, model, X, y_true, sensitive_features, cv, task):
         """Compute robustness metrics including cross-validation and noise sensitivity."""
 
-        cv_scores = model.cross_validate(X, y_true, sensitive_features=sensitive_features, cv=cv)
-
         score_metric = 'accuracy' if task == 'classification' else 'r2'
+        try:
+            cv_scores = model.cross_validate(X, y_true, sensitive_features=sensitive_features, cv=cv)
+            cv_mean = cv_scores['test_' + score_metric].mean()
+            cv_std = cv_scores['test_' + score_metric].std()
+        except NotImplementedError:
+            cv_mean = None
+            cv_std = None
 
         return {
-            'cv_mean': cv_scores['test_' + score_metric].mean(),
-            'cv_std': cv_scores['test_' + score_metric].std(),
+            'cv_mean': cv_mean,
+            'cv_std': cv_std,
             'noise_sensitivity': self.compute_noise_sensitivity(model, X, y_true, task)
         }
     
@@ -218,7 +223,7 @@ class EquiMLEvaluation:
             explainer = lime.lime_tabular.LimeTabularExplainer(X.values, feature_names=X.columns.tolist())
             exp = explainer.explain_instance(X.iloc[0].values, model.predict_proba, num_features=5)
             return exp.as_list()
-        except (AttributeError, ValueError):
+        except (AttributeError, ValueError, NotImplementedError):
             return "LIME explanations not available for this model."
     
     def compute_statistical_tests(self, y_true, y_pred, task):

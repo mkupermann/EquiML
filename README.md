@@ -1,3 +1,7 @@
+<!-- TODO(maintainer): update the GitHub repo "About" description (set in
+     the GitHub UI, not here) to: "A focused CLI for fairness audits on
+     tabular ML — wraps fairlearn, scikit-learn, and SHAP." -->
+
 # EquiML
 
 [![CI](https://github.com/mkupermann/EquiML/actions/workflows/ci.yml/badge.svg)](https://github.com/mkupermann/EquiML/actions/workflows/ci.yml)
@@ -7,6 +11,11 @@
 Quick fairness audits for ML datasets from the command line.
 
 EquiML wraps [fairlearn](https://fairlearn.org/), [SHAP](https://shap.readthedocs.io/), and [scikit-learn](https://scikit-learn.org/) into a single pipeline: load data, detect bias, train a fair model, compare results.
+
+<!-- TODO(maintainer): two sentences in your own voice. Why fairness, why now,
+     what client pattern made you tired of rebuilding this glue. Don't
+     ghostwrite this paragraph — it either lands as conviction or it
+     weakens the rest of the README. -->
 
 ## Why EquiML
 
@@ -79,7 +88,7 @@ drift = detector.detect_drift(new_data)
 
 ## What it does
 
-1. **Bias Detection** - Measures demographic parity, equalized odds, and disparate impact across sensitive groups
+1. **Bias Detection** - Surfaces fairness metrics (demographic parity, equalized odds, disparate impact) across sensitive groups. You decide whether the disparity is acceptable for your domain — the tool reports numbers, not verdicts.
 2. **Fair Training** - Trains models with fairness constraints using fairlearn's ExponentiatedGradient
 3. **Comparison** - Shows baseline vs. fair model side-by-side so you see the accuracy/fairness tradeoff
 4. **Explainability** - SHAP and LIME explanations for model decisions
@@ -96,6 +105,23 @@ This is an opinionated pipeline, not a new algorithm. The actual ML work is done
 | Model explanations | [SHAP](https://shap.readthedocs.io/), [LIME](https://github.com/marcotcr/lime) |
 | ML models | [scikit-learn](https://scikit-learn.org/) |
 | Statistical tests | [scipy](https://scipy.org/), [statsmodels](https://www.statsmodels.org/) |
+
+## How EquiML compares to fairlearn / aif360 / Aequitas
+
+- **[fairlearn](https://fairlearn.org/)** is the underlying library. EquiML's job is to be a CLI you can pipe into CI; fairlearn is the toolbox you build with.
+- **[aif360](https://aif360.res.ibm.com/)** (IBM) has a broader algorithm catalogue, a heavier install, and a more academic shape. Choose aif360 if you need pre-, in-, and post-processing variety beyond `ExponentiatedGradient` and reweighing.
+- **[Aequitas](http://www.datasciencepublicpolicy.org/our-work/tools-guides/aequitas/)** (CMU/DSSG) is policy-audit-shaped, with group-disparity dashboards. It is often the right pick for public-sector audits.
+- **EquiML** is an opinionated three-command pipeline, single-author, built for a specific audit cadence — not a research toolkit.
+
+If you don't already know which of these you need, you probably need fairlearn or Aequitas, not EquiML.
+
+## Where this fits in your governance framework
+
+The JSON metrics output is intended as evidence for **EU AI Act Art. 9** (risk management) and **Art. 15** (accuracy and robustness) documentation. The HTML report is intended as input to **ISO/IEC 42001** AI-management-system review cycles.
+
+The audit fits the **Measure** function of the **NIST AI Risk Management Framework** (Govern / Map / Measure / Manage). It does not cover Govern or Manage — those are policy and process work that sits outside the tool.
+
+The tool is **not a Conformity Assessment**. It produces evidence; the assessment is a human and legal exercise.
 
 ## Supported algorithms
 
@@ -119,12 +145,19 @@ tests/
   test_audit_pipeline.py
 ```
 
-## Scope and limitations
+## What this tool does not do
 
-- Tabular classification only. No text, image, or time-series models.
-- Sensitive features must be declared explicitly — no automatic detection.
-- Fairness metrics assume train and test distributions are i.i.d.
-- The fair model always reduces accuracy. EquiML makes the tradeoff visible; the decision is yours.
+- Not a legal opinion or regulatory verdict.
+- Not jurisdiction-specific. Fairness definitions vary by domain and by law.
+- No intersectional fairness analysis (yet). Bias at the cross-product of two protected attributes is not assessed.
+- Assumes train and test are i.i.d. Not appropriate when distributions shift.
+- Tabular classification only. No text, image, time-series, or LLM evaluation.
+
+## About the author
+
+Built by Michael Kupermann at [Kupermann Consulting](https://kupermann.com).
+Companion writing on Medium: [Cortex HDC](URL_HERE), [FIRE Score](URL_HERE).
+Issues, ideas, and collaboration enquiries welcome.
 
 ## License
 

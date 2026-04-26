@@ -1,31 +1,13 @@
-"""Test the core audit pipeline end-to-end."""
+"""Test the core audit pipeline end-to-end.
+
+The `adult_sample` fixture lives in `/conftest.py` and is shared across the
+suite.
+"""
 
 import pytest
 import pandas as pd
 import numpy as np
 import os
-
-
-@pytest.fixture
-def adult_sample():
-    """Minimal synthetic dataset mimicking the Adult Census structure."""
-    np.random.seed(42)
-    n = 300
-    gender = np.random.choice(["Male", "Female"], n)
-    age = np.random.randint(18, 65, n)
-    hours = np.random.randint(10, 60, n)
-    # Introduce bias: males more likely to have high income
-    income = np.where(
-        (gender == "Male") & (hours > 35),
-        np.random.choice([0, 1], n, p=[0.3, 0.7]),
-        np.random.choice([0, 1], n, p=[0.7, 0.3]),
-    )
-    return pd.DataFrame({
-        "age": age,
-        "hours_per_week": hours,
-        "gender": gender,
-        "income": income,
-    })
 
 
 class TestDataModule:
