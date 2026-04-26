@@ -115,6 +115,14 @@ This is an opinionated pipeline, not a new algorithm. The actual ML work is done
 
 If you don't already know which of these you need, you probably need fairlearn or Aequitas, not EquiML.
 
+## Where this fits in your governance framework
+
+The JSON metrics output is intended as evidence for **EU AI Act Art. 9** (risk management) and **Art. 15** (accuracy and robustness) documentation. The HTML report is intended as input to **ISO/IEC 42001** AI-management-system review cycles.
+
+The audit fits the **Measure** function of the **NIST AI Risk Management Framework** (Govern / Map / Measure / Manage). It does not cover Govern or Manage — those are policy and process work that sits outside the tool.
+
+The tool is **not a Conformity Assessment**. It produces evidence; the assessment is a human and legal exercise.
+
 ## Supported algorithms
 
 - `logistic_regression` (default)
