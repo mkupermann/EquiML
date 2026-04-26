@@ -29,6 +29,10 @@ It is not a new algorithm. It is a way to stop copying the same glue code.
 pip install -e .
 ```
 
+Tested on Python 3.9–3.12 (macOS / Linux). On Apple Silicon or Windows, SHAP wheels can need build tools; if `pip install` errors, run `pip install --upgrade pip setuptools wheel` first and retry.
+
+Project files: [`SECURITY.md`](SECURITY.md) · [`CHANGELOG.md`](CHANGELOG.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 ## Quickstart
 
 Run a fairness audit on the UCI Adult dataset in under a minute:
@@ -37,7 +41,7 @@ Run a fairness audit on the UCI Adult dataset in under a minute:
 python examples/adult_census_audit.py
 ```
 
-The script downloads ~5,000 rows of the Adult census, trains a baseline logistic-regression model and a fairness-constrained variant, and writes:
+The script downloads ~5,000 rows of the [Adult census](https://archive.ics.uci.edu/dataset/2/adult), trains a baseline logistic-regression model plus a fairness-constrained variant, and writes:
 
 - `examples/adult_audit.json` — metrics plus a `_meta` block (library versions, random seed, command args) suitable for a CI artefact or compliance evidence pack.
 - `examples/adult_audit.html` — side-by-side baseline-vs-fair report.
@@ -52,16 +56,29 @@ PERFORMANCE (Baseline / Fair Model)
 FAIRNESS (lower = fairer)
   Demographic Parity:  0.205  /  0.041
   Equalized Odds:      0.338  /  0.285
-
-  Maximum group disparity: 0.338
-  Note: thresholds for 'acceptable' bias are domain- and
-  jurisdiction-specific. This number is a starting point for
-  review, not a regulatory verdict.
-
-  Fair model reduces demographic parity gap by 80%
 ```
 
-The fair model cut the demographic-parity gap by 80 % at almost no accuracy cost. For your own dataset, see [Usage](#usage) below.
+### How to read this
+
+Demographic parity is the gap in selection rates between sensitive groups, scored 0–1. `0.205` means the favoured group is selected 20 percentage points more often; `0.041` is small but not zero. The fair model trains under a `DemographicParity` constraint via fairlearn's `ExponentiatedGradient`, so it pulls hard on that gap. Equalized Odds (the gap in true and false positive rates) only moves from `0.338` to `0.285` — the constraint optimised demographic parity, not equalized odds, and a different constraint would trade differently. Adult itself has [documented label and selection bias](https://arxiv.org/abs/2108.04884), so treat this run as a tutorial, not a model for new work.
+
+### Run it on your CSV
+
+```bash
+equiml audit your_data.csv --target <column you predict> --sensitive <protected column>
+```
+
+The target must be binary. The sensitive feature can be a single column or several (`--sensitive gender race`); each is audited individually and per-feature metrics land under `metrics["per_sensitive"][<name>]` in the JSON.
+
+### What to do with the output
+
+Open `adult_audit.html` and read the side-by-side panels. The JSON's `_meta` block is your audit-trail artefact: commit it next to your model card, attach it to a CI run, or hand it to a Risk colleague as evidence under EU AI Act Art. 15. EquiML reports numbers; whether to retrain, monitor via `BiasMonitor`, or escalate is a domain decision.
+
+### Troubleshooting
+
+- **Audit can't reach OpenML or UCI on first run.** The example needs network access to one of the two; behind a corporate proxy, set `HTTPS_PROXY`. The CSV caches at `examples/adult.csv` after a successful run, so subsequent runs are offline.
+- **Audit is slow on a large dataset.** SHAP's `PermutationExplainer` scales poorly on tree models. Subsample to ~5k rows for a fast demo, full data for a real audit.
+- **`predict_proba` fails on the fair model.** That's by design: `fairlearn.reductions.ExponentiatedGradient` is a randomised classifier and probability averaging across its predictors is mathematically incorrect. Use `predict()` and report fairness from hard predictions.
 
 ## Usage
 
@@ -151,11 +168,16 @@ If you don't already know which of these you need, you probably need fairlearn o
 
 ## Where this fits in your governance framework
 
-The JSON metrics output is intended as evidence for **EU AI Act Art. 9** (risk management) and **Art. 15** (accuracy and robustness) documentation. The HTML report is intended as input to **ISO/IEC 42001** AI-management-system review cycles.
+EquiML produces evidence; the assessment is a human and legal exercise. It is **not a Conformity Assessment**. The audit fits the **Measure** function of the **NIST AI Risk Management Framework** (Govern / Map / Measure / Manage) and does not cover Govern or Manage — those are policy and process work that sits outside the tool.
 
-The audit fits the **Measure** function of the **NIST AI Risk Management Framework** (Govern / Map / Measure / Manage). It does not cover Govern or Manage — those are policy and process work that sits outside the tool.
+| EquiML artefact | Maps to | What it evidences |
+|---|---|---|
+| `metrics.demographic_parity_difference` etc. (JSON) | EU AI Act Art. 15 §3 | Group-disparity testing was performed on this model. Not that the result is acceptable — that is a domain decision. |
+| `_meta` block (JSON) | EU AI Act Art. 12 (record keeping); ISO/IEC 42001 §8.3 | Reproducibility metadata for a single audit run: versions, seed, dataset path, args. |
+| HTML report | ISO/IEC 42001 §9.1 (monitoring) | Human-reviewable artefact for an AI-management-system review cycle. |
+| Audit run itself | NIST AI RMF Measure | One Measure-function activity; does not cover Govern or Manage. |
 
-The tool is **not a Conformity Assessment**. It produces evidence; the assessment is a human and legal exercise.
+The crosswalk is a starting point for your evidence pack, not a substitute for legal review of which clauses apply to your model and jurisdiction.
 
 ## Supported algorithms
 

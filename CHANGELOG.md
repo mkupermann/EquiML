@@ -52,11 +52,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Roadmap
 
-The next two quarters, in rough priority order:
+The next two quarters, in rough priority order. Items below `1.2.0`
+came out of a stakeholder review of the README Quickstart and are
+ranked by how often they were raised across nine reviewer lenses.
 
 - **1.0.x** — bug-fix releases as issues come in.
 - **1.1.0** — intersectional fairness analysis (audit at the
   cross-product of two protected attributes).
+- **1.1.x** candidates (raised by 3+ reviewer lenses):
+  - `--fail-on demographic_parity>0.1` style threshold gate so the
+    audit becomes a CI assertion, not just a reporter. Documented exit
+    codes (0 success, 2 data error, 3 gate breached, 4 schema mismatch).
+  - `--offline` mode that refuses any network call and a bundled small
+    sample CSV so the Quickstart is runnable without egress.
+  - Dataset SHA-256, model SHA-256, and `git_sha` in the `_meta` block
+    so the JSON is auditable evidence, not just a metric snapshot.
+  - Published JSON schema (`equiml/schema/audit.v1.json`) with a
+    `--schema-version` flag for downstream contract tests.
 - **1.2.0** — distribution-shift handling (drift-aware audit, not just
-  i.i.d.).
+  i.i.d.). Recommend `folktables` ACSIncome over Adult for new work.
+- **1.3.0** candidates:
+  - `equiml diff` for cross-quarter audit comparison (point at two
+    JSON files, render a diff report).
+  - `--demo` flag so the Quickstart works from `pip install equiml`
+    alone, without cloning the repo.
 - **Parked** — MCP server wrapper exposing `audit_dataset` as a tool.
