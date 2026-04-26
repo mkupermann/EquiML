@@ -145,12 +145,13 @@ tests/
   test_audit_pipeline.py
 ```
 
-## Scope and limitations
+## What this tool does not do
 
-- Tabular classification only. No text, image, or time-series models.
-- Sensitive features must be declared explicitly — no automatic detection.
-- Fairness metrics assume train and test distributions are i.i.d.
-- The fair model always reduces accuracy. EquiML makes the tradeoff visible; the decision is yours.
+- Not a legal opinion or regulatory verdict.
+- Not jurisdiction-specific. Fairness definitions vary by domain and by law.
+- No intersectional fairness analysis (yet). Bias at the cross-product of two protected attributes is not assessed.
+- Assumes train and test are i.i.d. Not appropriate when distributions shift.
+- Tabular classification only. No text, image, time-series, or LLM evaluation.
 
 ## License
 
