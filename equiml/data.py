@@ -418,8 +418,12 @@ class Data:
         # Calculate sample weights to balance sensitive groups
         from sklearn.utils.class_weight import compute_sample_weight
 
-        # Get sensitive feature values
-        sensitive_cols = [col for col in self.X.columns if any(sf in col for sf in self.sensitive_features)]
+        # Get sensitive feature values (exact-prefix match: a column matches
+        # sensitive feature `sf` iff col == sf or col.startswith(f"{sf}_"))
+        sensitive_cols = [
+            col for col in self.X.columns
+            if any(col == sf or col.startswith(f"{sf}_") for sf in self.sensitive_features)
+        ]
         if not sensitive_cols:
             logger.warning("No sensitive feature columns found for reweighing.")
             return
