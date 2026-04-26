@@ -49,5 +49,8 @@ Changelog = "https://github.com/mkupermann/EquiML/blob/main/CHANGELOG.md"
 [project.scripts]
 equiml = "equiml.cli:main"
 
+[tool.setuptools.package-data]
+equiml = ["*.html", "*.j2"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

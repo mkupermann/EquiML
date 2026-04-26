@@ -7,6 +7,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased] — 1.1.0-dev
 
 ### Added
+- **Auto model-card generation.** New `equiml card audit.json --output
+  MODEL_CARD.md` subcommand (RFC 0002). Produces a Hugging Face-compatible
+  markdown card with YAML frontmatter, per-sensitive metric tables, and
+  an embedded policy-result block when `--policy` is passed. Author
+  context (model name, intended use, ethical considerations) is supplied
+  via `--config card.yaml`; anything missing renders as `TODO(maintainer)`.
+- `equiml/card.py`, `equiml/model_card_template.md.j2`, and a worked
+  sample `examples/model_card_config.yaml` + generated `examples/MODEL_CARD.md`.
 - **Fairness policy-as-code.** New `fairness.yaml` schema (RFC 0001),
   `equiml/policy.py` evaluator, `--policy` flag on `equiml audit`, and a
   new `equiml verify <audit.json> --policy <fairness.yaml>` subcommand
@@ -15,7 +23,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   breached, `4` policy schema error.
 - `examples/fairness.yaml` sample policy for the Adult-census demo.
 - `pyyaml` runtime dependency.
-- `docs/rfcs/0001-policy-as-code.md` design doc.
+- `docs/rfcs/0001-policy-as-code.md` and `docs/rfcs/0002-model-card-generation.md`
+  design docs.
 
 ## [Unreleased] — 1.0.1
 
@@ -84,6 +93,9 @@ ranked by how often they were raised across nine reviewer lenses.
 - **1.3.0** candidates:
   - `equiml diff` for cross-quarter audit comparison (point at two
     JSON files, render a diff report).
+  - `equiml card diff` for diffing two model cards.
   - `--demo` flag so the Quickstart works from `pip install equiml`
     alone, without cloning the repo.
+  - Cosign / Sigstore signing of the rendered model card with the
+    audit JSON hash embedded.
 - **Parked** — MCP server wrapper exposing `audit_dataset` as a tool.

@@ -25,6 +25,7 @@ from .policy import (
     format_result,
     load_policy,
 )
+from .card import CardConfig, build_card_from_audit, load_card_config
 
 logger = logging.getLogger(__name__)
 
@@ -276,6 +277,49 @@ def _make_serializable(obj):
     return obj
 
 
+def cmd_card(args: argparse.Namespace) -> int:
+    """Generate a model card (markdown) from an audit JSON."""
+    audit_path = args.audit_json
+    output_path = args.output
+    policy_path = getattr(args, "policy", None)
+    config_path = getattr(args, "config", None)
+
+    if not os.path.exists(audit_path):
+        print(f"Error: audit JSON file '{audit_path}' not found.", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    policy = None
+    if policy_path:
+        try:
+            policy = load_policy(policy_path)
+        except PolicyError as e:
+            print(f"Policy schema error: {e}", file=sys.stderr)
+            return EXIT_POLICY_SCHEMA_ERROR
+
+    config = CardConfig()
+    if config_path:
+        try:
+            config = load_card_config(config_path)
+        except (FileNotFoundError, ValueError) as e:
+            print(f"Card config error: {e}", file=sys.stderr)
+            return EXIT_DATA_ERROR
+
+    try:
+        build_card_from_audit(
+            audit_json_path=audit_path,
+            output_path=output_path,
+            policy=policy,
+            policy_path=policy_path,
+            config=config,
+        )
+    except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
+        print(f"Could not build model card: {e}", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    print(f"Model card written to {output_path}")
+    return EXIT_SUCCESS
+
+
 def cmd_verify(args: argparse.Namespace) -> int:
     """Verify a previously-saved audit JSON against a policy file."""
     audit_path = args.audit_json
@@ -349,6 +393,27 @@ def main():
     )
     verify_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
+    # card command
+    card_parser = subparsers.add_parser(
+        "card",
+        help="Generate a Hugging Face-compatible model card (markdown) from an audit JSON",
+    )
+    card_parser.add_argument("audit_json", help="Path to audit JSON produced by `equiml audit --output ...`")
+    card_parser.add_argument(
+        "--output", "-o", required=True,
+        help="Path to write the model card (e.g. MODEL_CARD.md)",
+    )
+    card_parser.add_argument(
+        "--policy", "-p",
+        help="Optional fairness.yaml policy; gate results render in the card",
+    )
+    card_parser.add_argument(
+        "--config", "-c",
+        help="Optional author config YAML (model name, intended use, etc.). "
+             "See examples/model_card_config.yaml.",
+    )
+    card_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+
     args = parser.parse_args()
 
     if args.command is None:
@@ -366,6 +431,8 @@ def main():
         sys.exit(cmd_audit(args))
     elif args.command == "verify":
         sys.exit(cmd_verify(args))
+    elif args.command == "card":
+        sys.exit(cmd_card(args))
 
 
 if __name__ == "__main__":

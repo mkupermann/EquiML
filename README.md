@@ -102,6 +102,11 @@ equiml audit data.csv --target income --sensitive gender race --policy fairness.
 
 # Re-check a saved audit JSON against a (possibly newer) policy
 equiml verify metrics.json --policy fairness.yaml
+
+# Generate a Hugging Face-compatible model card from the audit
+equiml card metrics.json --policy fairness.yaml \
+    --config examples/model_card_config.yaml \
+    --output MODEL_CARD.md
 ```
 
 ### Fairness policy-as-code
@@ -126,6 +131,10 @@ metadata:
 ```
 
 Exit codes: `0` pass · `2` data error · `3` gate breached · `4` schema error.
+
+### Model cards
+
+`equiml card` produces a Hugging Face-compatible markdown model card from an audit JSON: YAML frontmatter (so HF Hub indexes the metrics), Mitchell et al. (2019) section structure, per-sensitive metric tables, an embedded policy result block, and a footer naming the EquiML version that produced it. See `examples/MODEL_CARD.md` for a worked output and `examples/model_card_config.yaml` for the author-context fields you supply (model name, intended use, ethical considerations, training data). Anything you omit renders as a `TODO(maintainer)` placeholder rather than ghostwritten prose.
 
 ### Python API
 
