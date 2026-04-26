@@ -29,6 +29,40 @@ It is not a new algorithm. It is a way to stop copying the same glue code.
 pip install -e .
 ```
 
+## Quickstart
+
+Run a fairness audit on the UCI Adult dataset in under a minute:
+
+```bash
+python examples/adult_census_audit.py
+```
+
+The script downloads ~5,000 rows of the Adult census, trains a baseline logistic-regression model and a fairness-constrained variant, and writes:
+
+- `examples/adult_audit.json` — metrics plus a `_meta` block (library versions, random seed, command args) suitable for a CI artefact or compliance evidence pack.
+- `examples/adult_audit.html` — side-by-side baseline-vs-fair report.
+
+Expected console output:
+
+```text
+PERFORMANCE (Baseline / Fair Model)
+  Accuracy:  81.7%  /  81.6%
+  F1-Score:  80.7%  /  80.3%
+
+FAIRNESS (lower = fairer)
+  Demographic Parity:  0.205  /  0.041
+  Equalized Odds:      0.338  /  0.285
+
+  Maximum group disparity: 0.338
+  Note: thresholds for 'acceptable' bias are domain- and
+  jurisdiction-specific. This number is a starting point for
+  review, not a regulatory verdict.
+
+  Fair model reduces demographic parity gap by 80%
+```
+
+The fair model cut the demographic-parity gap by 80 % at almost no accuracy cost. For your own dataset, see [Usage](#usage) below.
+
 ## Usage
 
 ### CLI
