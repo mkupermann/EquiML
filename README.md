@@ -136,6 +136,35 @@ Exit codes: `0` pass · `2` data error · `3` gate breached · `4` schema error.
 
 `equiml card` produces a Hugging Face-compatible markdown model card from an audit JSON: YAML frontmatter (so HF Hub indexes the metrics), Mitchell et al. (2019) section structure, per-sensitive metric tables, an embedded policy result block, and a footer naming the EquiML version that produced it. See `examples/MODEL_CARD.md` for a worked output and `examples/model_card_config.yaml` for the author-context fields you supply (model name, intended use, ethical considerations, training data). Anything you omit renders as a `TODO(maintainer)` placeholder rather than ghostwritten prose.
 
+### Production drift monitoring
+
+`equiml monitor` is a time-aware fairness monitor for deployed models. It records batches over time to an append-only JSONL state file, then evaluates drift between a baseline window and a current window using the Population Stability Index. It can also enforce a `fairness.yaml` continuously, not just at audit time.
+
+```bash
+# Append a batch from a CSV (predictions + sensitive columns + optional labels)
+equiml monitor record \
+    --state monitor_state.jsonl \
+    --batch predictions.csv \
+    --predictions-col prediction --sensitive sex,race --labels-col actual
+
+# Check the latest 7-day window against a 30-day baseline + a fairness policy
+equiml monitor check \
+    --state monitor_state.jsonl \
+    --sensitive sex,race \
+    --baseline-days 30 --current-days 7 \
+    --policy fairness.yaml
+
+# Render a markdown drift report
+equiml monitor report \
+    --state monitor_state.jsonl \
+    --sensitive sex,race \
+    --baseline-days 30 --current-days 7 \
+    --policy fairness.yaml \
+    --output drift_report.md
+```
+
+PSI bands: `< 0.10` no drift · `0.10–0.25` moderate · `≥ 0.25` material. Exit codes add `5` for drift breach (policy breach `3` still wins when both fire). See `examples/DRIFT_REPORT.md` and `examples/monitor_state.jsonl` for a worked example.
+
 ### Python API
 
 ```python

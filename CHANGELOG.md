@@ -7,6 +7,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased] — 1.1.0-dev
 
 ### Added
+- **Production fairness drift monitoring.** New `FairnessDriftMonitor`
+  (RFC 0003) with time-windowed metrics, JSONL persistence, and
+  Population Stability Index drift detection on per-group selection
+  rates. Replaces the 1.0.x `BiasMonitor` stub for production use;
+  `BiasMonitor` stays as-is for backward compatibility.
+- New `equiml monitor` subcommand with three operations: `record`
+  (append a batch from a CSV), `check` (evaluate drift + policy),
+  `report` (render a markdown drift report). Exit code `5` added
+  for drift breach without policy breach; policy breach (`3`) still
+  wins when both fire.
+- `equiml/drift.py`, `equiml/drift_report_template.md.j2`,
+  `tests/test_drift.py` (18 tests), `examples/monitor_state.jsonl`
+  and `examples/DRIFT_REPORT.md` worked examples.
+- `docs/rfcs/0003-fairness-drift-monitoring.md` design doc.
 - **Auto model-card generation.** New `equiml card audit.json --output
   MODEL_CARD.md` subcommand (RFC 0002). Produces a Hugging Face-compatible
   markdown card with YAML frontmatter, per-sensitive metric tables, and
@@ -82,6 +96,11 @@ ranked by how often they were raised across nine reviewer lenses.
 - **1.1.0** — intersectional fairness analysis (audit at the
   cross-product of two protected attributes).
 - **1.1.x** candidates (raised by 3+ reviewer lenses):
+  - KS / chi² drift tests on raw prediction streams (PSI ships in 1.1.0;
+    KS / chi² need a streaming abstraction that is 1.2 territory).
+  - Delayed-label backfill for `FairnessDriftMonitor` (production
+    decisions arrive without immediate ground truth).
+  - HTML drift report with plotly time-series.
   - `--offline` mode that refuses any network call and a bundled small
     sample CSV so the Quickstart is runnable without egress.
   - Dataset SHA-256, model SHA-256, and `git_sha` in the `_meta` block
