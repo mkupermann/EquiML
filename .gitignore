@@ -40,3 +40,7 @@ htmlcov/
 
 # Env
 .env
+
+# Local Claude Code state and internal workshop materials
+.claude/
+equiml_cleanup_brief.md
