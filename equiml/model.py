@@ -86,7 +86,16 @@ class Model:
             raise AttributeError("Model does not support predict_proba.")
 
     def cross_validate(self, X, y, sensitive_features=None, cv=5) -> dict:
-        """Cross-validate the model."""
+        """Cross-validate the model.
+
+        Not supported for fairness-constrained models: silently dropping the
+        constraint and CV-ing the unconstrained estimator would be misleading.
+        """
+        if hasattr(self.model, "predictors_") or hasattr(self.model, "_estimator"):
+            raise NotImplementedError(
+                "cross_validate is not supported for fairness-constrained "
+                "models in this version; use the unconstrained baseline for "
+                "CV scores"
+            )
         scoring = ["accuracy", "precision_weighted", "recall_weighted", "f1_weighted"]
-        estimator = self.model.estimator if hasattr(self.model, "estimator") else self.model
-        return cross_validate(estimator, X, y, cv=cv, scoring=scoring)
+        return cross_validate(self.model, X, y, cv=cv, scoring=scoring)

@@ -171,13 +171,18 @@ class EquiMLEvaluation:
     def compute_robustness_metrics(self, model, X, y_true, sensitive_features, cv, task):
         """Compute robustness metrics including cross-validation and noise sensitivity."""
 
-        cv_scores = model.cross_validate(X, y_true, sensitive_features=sensitive_features, cv=cv)
-
         score_metric = 'accuracy' if task == 'classification' else 'r2'
+        try:
+            cv_scores = model.cross_validate(X, y_true, sensitive_features=sensitive_features, cv=cv)
+            cv_mean = cv_scores['test_' + score_metric].mean()
+            cv_std = cv_scores['test_' + score_metric].std()
+        except NotImplementedError:
+            cv_mean = None
+            cv_std = None
 
         return {
-            'cv_mean': cv_scores['test_' + score_metric].mean(),
-            'cv_std': cv_scores['test_' + score_metric].std(),
+            'cv_mean': cv_mean,
+            'cv_std': cv_std,
             'noise_sensitivity': self.compute_noise_sensitivity(model, X, y_true, task)
         }
     
