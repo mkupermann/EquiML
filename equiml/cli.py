@@ -196,15 +196,10 @@ def _print_results(metrics: dict, fair_metrics: dict, sensitive_cols: list) -> N
 
     # Assessment
     max_bias = max(dp_base, eo_base)
-    print(f"\n  ASSESSMENT")
-    if max_bias <= 0.05:
-        print("  LOW BIAS - Model appears fair across groups")
-    elif max_bias <= 0.1:
-        print("  MODERATE BIAS - Consider applying fairness constraints")
-    elif max_bias <= 0.2:
-        print("  SIGNIFICANT BIAS - Fairness mitigation recommended")
-    else:
-        print("  HIGH BIAS - Fairness mitigation strongly recommended")
+    print(f"\n  Maximum group disparity: {max_bias:.3f}")
+    print("  Note: thresholds for 'acceptable' bias are domain- and")
+    print("  jurisdiction-specific. This number is a starting point for")
+    print("  review, not a regulatory verdict.")
 
     # Improvement
     if dp_fair < dp_base:
