@@ -181,8 +181,12 @@ def cmd_audit(args: argparse.Namespace) -> None:
 
     # Generate HTML report
     if output_html:
-        generate_html_report(metrics, output_path=output_html,
-                           template_path=os.path.join(os.path.dirname(__file__), "report_template.html"))
+        generate_html_report(
+            metrics,
+            output_path=output_html,
+            template_path=os.path.join(os.path.dirname(__file__), "report_template.html"),
+            fair_metrics=fair_metrics,
+        )
         print(f"HTML report saved to {output_html}")
 
 
