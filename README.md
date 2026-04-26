@@ -29,6 +29,57 @@ It is not a new algorithm. It is a way to stop copying the same glue code.
 pip install -e .
 ```
 
+Tested on Python 3.9–3.12 (macOS / Linux). On Apple Silicon or Windows, SHAP wheels can need build tools; if `pip install` errors, run `pip install --upgrade pip setuptools wheel` first and retry.
+
+Project files: [`SECURITY.md`](SECURITY.md) · [`CHANGELOG.md`](CHANGELOG.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+## Quickstart
+
+Run a fairness audit on the UCI Adult dataset in under a minute:
+
+```bash
+python examples/adult_census_audit.py
+```
+
+The script downloads ~5,000 rows of the [Adult census](https://archive.ics.uci.edu/dataset/2/adult), trains a baseline logistic-regression model plus a fairness-constrained variant, and writes:
+
+- `examples/adult_audit.json` — metrics plus a `_meta` block (library versions, random seed, command args) suitable for a CI artefact or compliance evidence pack.
+- `examples/adult_audit.html` — side-by-side baseline-vs-fair report.
+
+Expected console output:
+
+```text
+PERFORMANCE (Baseline / Fair Model)
+  Accuracy:  81.7%  /  81.6%
+  F1-Score:  80.7%  /  80.3%
+
+FAIRNESS (lower = fairer)
+  Demographic Parity:  0.205  /  0.041
+  Equalized Odds:      0.338  /  0.285
+```
+
+### How to read this
+
+Demographic parity is the gap in selection rates between sensitive groups, scored 0–1. `0.205` means the favoured group is selected 20 percentage points more often; `0.041` is small but not zero. The fair model trains under a `DemographicParity` constraint via fairlearn's `ExponentiatedGradient`, so it pulls hard on that gap. Equalized Odds (the gap in true and false positive rates) only moves from `0.338` to `0.285` — the constraint optimised demographic parity, not equalized odds, and a different constraint would trade differently. Adult itself has [documented label and selection bias](https://arxiv.org/abs/2108.04884), so treat this run as a tutorial, not a model for new work.
+
+### Run it on your CSV
+
+```bash
+equiml audit your_data.csv --target <column you predict> --sensitive <protected column>
+```
+
+The target must be binary. The sensitive feature can be a single column or several (`--sensitive gender race`); each is audited individually and per-feature metrics land under `metrics["per_sensitive"][<name>]` in the JSON.
+
+### What to do with the output
+
+Open `adult_audit.html` and read the side-by-side panels. The JSON's `_meta` block is your audit-trail artefact: commit it next to your model card, attach it to a CI run, or hand it to a Risk colleague as evidence under EU AI Act Art. 15. EquiML reports numbers; whether to retrain, monitor via `BiasMonitor`, or escalate is a domain decision.
+
+### Troubleshooting
+
+- **Audit can't reach OpenML or UCI on first run.** The example needs network access to one of the two; behind a corporate proxy, set `HTTPS_PROXY`. The CSV caches at `examples/adult.csv` after a successful run, so subsequent runs are offline.
+- **Audit is slow on a large dataset.** SHAP's `PermutationExplainer` scales poorly on tree models. Subsample to ~5k rows for a fast demo, full data for a real audit.
+- **`predict_proba` fails on the fair model.** That's by design: `fairlearn.reductions.ExponentiatedGradient` is a randomised classifier and probability averaging across its predictors is mathematically incorrect. Use `predict()` and report fairness from hard predictions.
+
 ## Usage
 
 ### CLI
@@ -45,7 +96,74 @@ equiml audit data.csv --target income --sensitive gender --output metrics.json
 
 # Use a different algorithm
 equiml audit data.csv --target income --sensitive gender --algorithm random_forest
+
+# Gate on a fairness policy (CI mode); exit 3 if gates fail, 4 if YAML is malformed
+equiml audit data.csv --target income --sensitive gender race --policy fairness.yaml
+
+# Re-check a saved audit JSON against a (possibly newer) policy
+equiml verify metrics.json --policy fairness.yaml
+
+# Generate a Hugging Face-compatible model card from the audit
+equiml card metrics.json --policy fairness.yaml \
+    --config examples/model_card_config.yaml \
+    --output MODEL_CARD.md
 ```
+
+### Fairness policy-as-code
+
+Declare your team's fairness contract in a `fairness.yaml` and have it enforced
+in CI, in vendor review, and in compliance evidence with the same code. See
+`examples/fairness.yaml` for a worked example and `docs/rfcs/0001-policy-as-code.md`
+for the schema.
+
+```yaml
+version: 1
+target: income
+sensitive: [gender, race]
+gates:
+  demographic_parity_difference: { max: 0.10, severity: error }
+  equalized_odds_difference: { max: 0.30, severity: warning }
+  per_sensitive:
+    gender: { demographic_parity_difference: { max: 0.05 } }
+metadata:
+  reviewer: "model-risk@example.com"
+  next_review: "2026-07-01"
+```
+
+Exit codes: `0` pass · `2` data error · `3` gate breached · `4` schema error.
+
+### Model cards
+
+`equiml card` produces a Hugging Face-compatible markdown model card from an audit JSON: YAML frontmatter (so HF Hub indexes the metrics), Mitchell et al. (2019) section structure, per-sensitive metric tables, an embedded policy result block, and a footer naming the EquiML version that produced it. See `examples/MODEL_CARD.md` for a worked output and `examples/model_card_config.yaml` for the author-context fields you supply (model name, intended use, ethical considerations, training data). Anything you omit renders as a `TODO(maintainer)` placeholder rather than ghostwritten prose.
+
+### Production drift monitoring
+
+`equiml monitor` is a time-aware fairness monitor for deployed models. It records batches over time to an append-only JSONL state file, then evaluates drift between a baseline window and a current window using the Population Stability Index. It can also enforce a `fairness.yaml` continuously, not just at audit time.
+
+```bash
+# Append a batch from a CSV (predictions + sensitive columns + optional labels)
+equiml monitor record \
+    --state monitor_state.jsonl \
+    --batch predictions.csv \
+    --predictions-col prediction --sensitive sex,race --labels-col actual
+
+# Check the latest 7-day window against a 30-day baseline + a fairness policy
+equiml monitor check \
+    --state monitor_state.jsonl \
+    --sensitive sex,race \
+    --baseline-days 30 --current-days 7 \
+    --policy fairness.yaml
+
+# Render a markdown drift report
+equiml monitor report \
+    --state monitor_state.jsonl \
+    --sensitive sex,race \
+    --baseline-days 30 --current-days 7 \
+    --policy fairness.yaml \
+    --output drift_report.md
+```
+
+PSI bands: `< 0.10` no drift · `0.10–0.25` moderate · `≥ 0.25` material. Exit codes add `5` for drift breach (policy breach `3` still wins when both fire). See `examples/DRIFT_REPORT.md` and `examples/monitor_state.jsonl` for a worked example.
 
 ### Python API
 
@@ -117,11 +235,16 @@ If you don't already know which of these you need, you probably need fairlearn o
 
 ## Where this fits in your governance framework
 
-The JSON metrics output is intended as evidence for **EU AI Act Art. 9** (risk management) and **Art. 15** (accuracy and robustness) documentation. The HTML report is intended as input to **ISO/IEC 42001** AI-management-system review cycles.
+EquiML produces evidence; the assessment is a human and legal exercise. It is **not a Conformity Assessment**. The audit fits the **Measure** function of the **NIST AI Risk Management Framework** (Govern / Map / Measure / Manage) and does not cover Govern or Manage — those are policy and process work that sits outside the tool.
 
-The audit fits the **Measure** function of the **NIST AI Risk Management Framework** (Govern / Map / Measure / Manage). It does not cover Govern or Manage — those are policy and process work that sits outside the tool.
+| EquiML artefact | Maps to | What it evidences |
+|---|---|---|
+| `metrics.demographic_parity_difference` etc. (JSON) | EU AI Act Art. 15 §3 | Group-disparity testing was performed on this model. Not that the result is acceptable — that is a domain decision. |
+| `_meta` block (JSON) | EU AI Act Art. 12 (record keeping); ISO/IEC 42001 §8.3 | Reproducibility metadata for a single audit run: versions, seed, dataset path, args. |
+| HTML report | ISO/IEC 42001 §9.1 (monitoring) | Human-reviewable artefact for an AI-management-system review cycle. |
+| Audit run itself | NIST AI RMF Measure | One Measure-function activity; does not cover Govern or Manage. |
 
-The tool is **not a Conformity Assessment**. It produces evidence; the assessment is a human and legal exercise.
+The crosswalk is a starting point for your evidence pack, not a substitute for legal review of which clauses apply to your model and jurisdiction.
 
 ## Supported algorithms
 

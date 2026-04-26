@@ -1,0 +1,86 @@
+# Fairness drift report
+
+Generated: {{ generated_at }}
+State file: `{{ state_path }}`
+
+## Windows
+
+| Window | Days | Batches | Total samples |
+|---|---|---|---|
+| Baseline | {{ baseline_days }} | {{ baseline_n_batches }} | {{ baseline_n_samples }} |
+| Current | {{ current_days }} | {{ current_n_batches }} | {{ current_n_samples }} |
+
+## Drift
+
+- **Overall severity:** {{ drift.severity | upper }}
+- **Overall PSI:** `{{ '{:.4f}'.format(drift.psi_overall) }}`
+
+PSI bands: `< 0.10` no drift · `0.10–0.25` moderate · `≥ 0.25` material.
+
+| Sensitive feature | PSI | Reading |
+|---|---|---|
+{% for sf, psi in drift.psi_per_feature.items() -%}
+| `{{ sf }}` | {{ '{:.4f}'.format(psi) }} | {% if psi >= 0.25 %}material{% elif psi >= 0.10 %}moderate{% else %}none{% endif %} |
+{% endfor %}
+
+{% if drift.notes -%}
+Notes:
+{% for n in drift.notes -%}
+- {{ n }}
+{% endfor %}
+{% endif %}
+
+## Group selection rates over time
+
+### Baseline window
+
+{% for sf, rates in baseline_group_rates.items() -%}
+**{{ sf }}**
+
+{% for group, rate in rates.items() -%}
+- `{{ group }}`: {{ '{:.4f}'.format(rate) }}
+{% endfor %}
+
+{% endfor %}
+
+### Current window
+
+{% for sf, rates in current_group_rates.items() -%}
+**{{ sf }}**
+
+{% for group, rate in rates.items() -%}
+- `{{ group }}`: {{ '{:.4f}'.format(rate) }}
+{% endfor %}
+
+{% endfor %}
+
+## Aggregated fairness metrics
+
+| Metric | Baseline | Current | Δ |
+|---|---|---|---|
+{% for k in metric_keys -%}
+| `{{ k }}` | {{ '{:.4f}'.format(baseline_metrics[k]) if k in baseline_metrics else 'n/a' }} | {{ '{:.4f}'.format(current_metrics[k]) if k in current_metrics else 'n/a' }} | {{ '{:+.4f}'.format(current_metrics[k] - baseline_metrics[k]) if (k in baseline_metrics and k in current_metrics) else 'n/a' }} |
+{% endfor %}
+
+{% if policy_result -%}
+## Policy enforcement (current window)
+
+- **Policy:** `{{ policy_path }}` (schema v{{ policy_result.policy_version }})
+- **Status:** {% if policy_result.passed %}PASSED{% else %}FAILED{% endif %} ({{ policy_result.errors|length }} error(s), {{ policy_result.warnings|length }} warning(s))
+
+{% if policy_result.violations -%}
+| Metric | Scope | Bound | Threshold | Observed | Severity |
+|---|---|---|---|---|---|
+{% for v in policy_result.violations -%}
+| `{{ v.metric }}` | {{ v.sensitive_feature or '(top-level)' }} | {{ v.bound }} | {{ '{:.4f}'.format(v.threshold) if v.bound != 'presence' else 'n/a' }} | {{ '{:.4f}'.format(v.observed) if v.bound != 'presence' else 'n/a' }} | {{ v.severity }} |
+{% endfor -%}
+{% else -%}
+All gates passed.
+{% endif -%}
+{% endif %}
+
+## Caveats
+
+- PSI is computed on group selection rates aggregated across batches in the window. It detects shifts in *who is being selected*, not in label distribution.
+- Equalized-odds and equal-opportunity metrics require ground-truth labels; batches without labels report demographic parity only.
+- A single PSI breach is a signal, not a verdict. Investigate before retraining.

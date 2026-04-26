@@ -1,0 +1,153 @@
+---
+{{ frontmatter_yaml }}
+---
+
+# {{ model_name }}
+
+{{ description }}
+
+## Model details
+
+- Model type: {{ model_type }}
+- Version: {{ model_version }}
+- Algorithm: `{{ meta.algorithm }}`
+- Random seed: `{{ meta.random_seed }}`
+- Library versions: scikit-learn `{{ meta.sklearn_version }}`, fairlearn `{{ meta.fairlearn_version }}`, Python `{{ meta.python_version }}`
+- Audited with: EquiML `{{ meta.equiml_version }}`
+- Generated: {{ generated_at }}
+- Contact: {{ contact }}
+
+## Intended use
+
+- **Primary use:** {{ intended_use.primary_use }}
+- **Primary users:** {{ intended_use.primary_users }}
+- **Out of scope:**
+{% for item in intended_use.out_of_scope -%}
+  - {{ item }}
+{% endfor %}
+
+## Factors
+
+The audit treated the following columns as sensitive features:
+{% for sf in meta.sensitive_features -%}
+- `{{ sf }}`
+{% endfor %}
+
+## Metrics
+
+### Performance (baseline / fair model)
+
+| Metric | Baseline | Fair model |
+|---|---|---|
+| Accuracy | {{ '{:.1%}'.format(baseline.accuracy) }} | {{ '{:.1%}'.format(fair.accuracy) }} |
+| F1-score | {{ '{:.1%}'.format(baseline.f1_score) }} | {{ '{:.1%}'.format(fair.f1_score) }} |
+{% if baseline.roc_auc is not none -%}
+| ROC AUC | {{ '{:.3f}'.format(baseline.roc_auc) }} | {{ '{:.3f}'.format(fair.roc_auc) if fair.roc_auc is not none else 'n/a' }} |
+{% endif %}
+
+### Fairness (lower = fairer)
+
+| Metric | Baseline | Fair model |
+|---|---|---|
+| Demographic parity difference | {{ '{:.4f}'.format(baseline.demographic_parity_difference) }} | {{ '{:.4f}'.format(fair.demographic_parity_difference) }} |
+| Equalized odds difference | {{ '{:.4f}'.format(baseline.equalized_odds_difference) }} | {{ '{:.4f}'.format(fair.equalized_odds_difference) }} |
+{% if baseline.equal_opportunity_difference is not none -%}
+| Equal opportunity difference | {{ '{:.4f}'.format(baseline.equal_opportunity_difference) }} | {{ '{:.4f}'.format(fair.equal_opportunity_difference) if fair.equal_opportunity_difference is not none else 'n/a' }} |
+{% endif %}
+
+{% if per_sensitive %}
+### Per sensitive feature
+
+{% for feature, block in per_sensitive.items() -%}
+#### `{{ feature }}`
+
+| Metric | Baseline | Fair model |
+|---|---|---|
+| Demographic parity difference | {{ '{:.4f}'.format(block.baseline.demographic_parity_difference) }} | {{ '{:.4f}'.format(block.fair.demographic_parity_difference) }} |
+| Equalized odds difference | {{ '{:.4f}'.format(block.baseline.equalized_odds_difference) }} | {{ '{:.4f}'.format(block.fair.equalized_odds_difference) }} |
+
+{% endfor %}
+{% endif %}
+
+## Evaluation data
+
+- Dataset: `{{ meta.dataset_path }}`
+- Target column: `{{ meta.target }}`
+- Sensitive columns: {% for sf in meta.sensitive_features %}`{{ sf }}`{% if not loop.last %}, {% endif %}{% endfor %}
+
+## Training data
+
+{{ training_data.notes }}
+
+- **Source:** {{ training_data.source }}
+- **Preprocessing:** {{ training_data.preprocessing }}
+
+## Quantitative analyses
+
+The full audit artefacts are linked here for reproducibility and review:
+
+- Audit JSON: `{{ audit_json_path }}`
+{% if html_report_path -%}
+- HTML report: `{{ html_report_path }}`
+{% endif %}
+
+## Compliance gates
+
+{% if policy_result -%}
+- **Policy:** `{{ policy_path }}` (schema v{{ policy_result.policy_version }})
+- **Status:** {% if policy_result.passed %}PASSED{% else %}FAILED{% endif %} ({{ policy_result.errors|length }} error(s), {{ policy_result.warnings|length }} warning(s))
+
+{% if policy_result.violations -%}
+| Metric | Scope | Bound | Threshold | Observed | Severity |
+|---|---|---|---|---|---|
+{% for v in policy_result.violations -%}
+| `{{ v.metric }}` | {{ v.sensitive_feature or '(top-level)' }} | {{ v.bound }} | {{ '{:.4f}'.format(v.threshold) if v.bound != 'presence' else 'n/a' }} | {{ '{:.4f}'.format(v.observed) if v.bound != 'presence' else 'n/a' }} | {{ v.severity }} |
+{% endfor -%}
+{% else -%}
+All gates passed.
+{% endif %}
+
+{% if policy_metadata.reviewer -%}
+- **Reviewer:** {{ policy_metadata.reviewer }}
+{% endif -%}
+{% if policy_metadata.next_review -%}
+- **Next review:** {{ policy_metadata.next_review }}
+{% endif -%}
+{% if policy_metadata.jurisdiction -%}
+- **Jurisdiction:** {{ policy_metadata.jurisdiction }}
+{% endif -%}
+{% if policy_metadata.legal_basis -%}
+- **Legal basis:** {{ policy_metadata.legal_basis }}
+{% endif %}
+{%- else -%}
+No fairness policy was supplied. To gate this card on a contract, run:
+
+```bash
+equiml card {{ audit_json_path }} --policy fairness.yaml --output MODEL_CARD.md
+```
+{% endif %}
+
+## Ethical considerations
+
+{% for item in ethical_considerations -%}
+- {{ item }}
+{% endfor %}
+
+## Caveats and recommendations
+
+{% for item in caveats -%}
+- {{ item }}
+{% endfor %}
+
+EquiML standard caveats:
+
+- Fairness metrics on this audit assume i.i.d. train/test data. Audit results do not transfer to deployment under distribution shift.
+- Demographic parity and equalized odds are not jointly satisfiable except in trivial cases. The fair model in this card optimised demographic parity; equalized odds is a different criterion.
+- Thresholds for "acceptable" disparity are domain- and jurisdiction-specific. The numbers here are evidence; the conformity assessment is a human and legal exercise.
+- This card is a snapshot of one audit run. Re-audit when the model, data, or policy changes.
+
+## Generated by
+
+- Tool: [EquiML](https://github.com/mkupermann/EquiML) `{{ meta.equiml_version }}`
+- Audit JSON: `{{ audit_json_path }}`
+- Generated at: {{ generated_at }}

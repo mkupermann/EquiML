@@ -1,0 +1,41 @@
+# Author config for `equiml card`. Fill in the human-supplied fields the
+# audit cannot know. Anything you leave out renders as a TODO placeholder.
+#
+# Example:
+#   equiml card examples/adult_audit.json \
+#       --policy examples/fairness.yaml \
+#       --config examples/model_card_config.yaml \
+#       --output examples/MODEL_CARD.md
+
+model_name: "Adult Census Income Classifier (demo)"
+model_version: "1.0.0"
+model_type: "Logistic regression for binary classification"
+description: |
+  Classifies whether a UCI Adult Census record has annual income above $50k.
+  This is a teaching demo — the Adult dataset has documented label and
+  selection bias (Ding et al., 2021, *Retiring Adult*) and should not be
+  used as a model for new credit-decisioning work.
+license: "MIT"
+contact: "ml-platform@example.com"
+
+intended_use:
+  primary_use: "Tutorial demonstrating EquiML's audit and policy-as-code flow."
+  primary_users: "Data scientists and ML platform engineers learning the pipeline."
+  out_of_scope:
+    - "Real credit-decisioning or hiring decisions."
+    - "Any production deployment without re-training on representative current data."
+    - "Income estimation; the model is binary (>50k yes/no)."
+
+training_data:
+  source: "UCI Machine Learning Repository — Adult Census (1994 extract)."
+  preprocessing: "Standard scaling on numerical features; one-hot encoding for categorical."
+  notes: "Subsampled to 5,000 rows for fast SHAP iteration in the demo."
+
+ethical_considerations:
+  - "The training data encodes 1994 US labour-market structure, including its disparities."
+  - "Demographic parity and equalized odds disagree by construction; the fair model in this card optimised demographic parity."
+  - "Sensitive features (`sex`, `race`) were treated as audit factors, not as model inputs to be optimised away."
+
+caveats:
+  - "Adult is a benchmark dataset, not a production-fit dataset. Re-audit on representative data before any real use."
+  - "i.i.d. evaluation; no temporal hold-out."

@@ -34,6 +34,7 @@ dependencies = [
     "jinja2>=3.0,<4",
     "statsmodels>=0.13,<1",
     "plotly>=5.0,<6",
+    "pyyaml>=6.0,<7",
 ]
 
 [project.optional-dependencies]
@@ -47,6 +48,9 @@ Changelog = "https://github.com/mkupermann/EquiML/blob/main/CHANGELOG.md"
 
 [project.scripts]
 equiml = "equiml.cli:main"
+
+[tool.setuptools.package-data]
+equiml = ["*.html", "*.j2"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

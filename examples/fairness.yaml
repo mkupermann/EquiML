@@ -1,0 +1,40 @@
+# Fairness policy for the Adult-census demo.
+# See docs/rfcs/0001-policy-as-code.md for the schema.
+#
+# Run end-to-end:
+#   python examples/adult_census_audit.py
+#   equiml verify examples/adult_audit.json --policy examples/fairness.yaml
+
+version: 1
+target: income
+sensitive:
+  - sex
+  - race
+algorithm: logistic_regression
+
+gates:
+  # Flat-shape gates apply to the primary (first) sensitive feature: sex.
+  demographic_parity_difference:
+    max: 0.10
+    severity: error
+  equalized_odds_difference:
+    max: 0.30
+    severity: warning
+
+  # Per-sensitive-shape gates apply to metrics["per_sensitive"][<feature>].
+  per_sensitive:
+    sex:
+      demographic_parity_difference:
+        max: 0.05
+        severity: error
+    race:
+      demographic_parity_difference:
+        max: 0.10
+        severity: error
+
+metadata:
+  model_owner: "ml-platform@example.com"
+  reviewer: "model-risk@example.com"
+  next_review: "2026-07-01"
+  jurisdiction: "EU"
+  legal_basis: "EU AI Act Art. 15"
