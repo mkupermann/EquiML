@@ -223,7 +223,7 @@ class EquiMLEvaluation:
             explainer = lime.lime_tabular.LimeTabularExplainer(X.values, feature_names=X.columns.tolist())
             exp = explainer.explain_instance(X.iloc[0].values, model.predict_proba, num_features=5)
             return exp.as_list()
-        except (AttributeError, ValueError):
+        except (AttributeError, ValueError, NotImplementedError):
             return "LIME explanations not available for this model."
     
     def compute_statistical_tests(self, y_true, y_pred, task):

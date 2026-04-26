@@ -78,26 +78,46 @@ def cmd_audit(args: argparse.Namespace) -> None:
     )
     data.split_data(test_size=0.2)
 
-    # Find sensitive feature columns after encoding
-    sensitive_train_cols = [
-        col for col in data.X_train.columns
-        if any(sf in col for sf in sensitive_cols)
-    ]
+    # Find sensitive feature columns after encoding (exact-prefix match
+    # so e.g. "race" does not match "racing_score").
+    def _encoded_cols_for(sf: str) -> list:
+        return [
+            col for col in data.X_train.columns
+            if col == sf or col.startswith(f"{sf}_")
+        ]
 
-    sensitive_train = data.X_train[sensitive_train_cols[0]] if sensitive_train_cols else None
-    sensitive_test = data.X_test[sensitive_train_cols[0]] if sensitive_train_cols else None
+    # Map each requested sensitive feature to a single representative
+    # encoded column (first one). Skip features with no matching column.
+    per_feature_encoded: dict = {}
+    for sf in sensitive_cols:
+        cols = _encoded_cols_for(sf)
+        if cols:
+            per_feature_encoded[sf] = cols[0]
+
+    # The first sensitive feature is "primary": used for the constrained
+    # training and for the top-level metrics dict (kept for backward
+    # compat with _print_results and the HTML report).
+    primary_sf = sensitive_cols[0] if sensitive_cols else None
+    primary_col = per_feature_encoded.get(primary_sf) if primary_sf else None
+
+    sensitive_train = data.X_train[primary_col] if primary_col else None
+    sensitive_test = data.X_test[primary_col] if primary_col else None
 
     # Train model
     print(f"Training {algorithm} model...")
     model = Model(algorithm=algorithm)
     model.train(data.X_train, data.y_train, sensitive_features=sensitive_train)
 
-    # Also train a fair variant for comparison
+    # Also train a fair variant for comparison.
+    # NOTE: ExponentiatedGradient accepts a single sensitive vector, so
+    # the constrained training uses ONLY the primary (first) sensitive
+    # feature. Per-feature audit metrics below are evaluated against this
+    # same model.
     print("Training fair model (demographic parity)...")
     fair_model = Model(algorithm=algorithm, fairness_constraint="demographic_parity")
     fair_model.train(data.X_train, data.y_train, sensitive_features=sensitive_train)
 
-    # Evaluate both
+    # Evaluate both against the primary sensitive feature
     evaluation = EquiMLEvaluation()
 
     predictions = model.predict(data.X_test)
@@ -113,6 +133,26 @@ def cmd_audit(args: argparse.Namespace) -> None:
         y_pred=fair_predictions,
         sensitive_features=sensitive_test,
     )
+
+    # Per-sensitive-feature evaluation: compute metrics against each
+    # sensitive feature individually so multi-sensitive audits are not
+    # silently reduced to the first one.
+    per_sensitive_baseline: dict = {}
+    per_sensitive_fair: dict = {}
+    for sf, encoded_col in per_feature_encoded.items():
+        sf_test = data.X_test[encoded_col]
+        per_sensitive_baseline[sf] = evaluation.evaluate(
+            model, data.X_test, data.y_test,
+            y_pred=predictions,
+            sensitive_features=sf_test,
+        )
+        per_sensitive_fair[sf] = evaluation.evaluate(
+            fair_model, data.X_test, data.y_test,
+            y_pred=fair_predictions,
+            sensitive_features=sf_test,
+        )
+    metrics["per_sensitive"] = per_sensitive_baseline
+    fair_metrics["per_sensitive"] = per_sensitive_fair
 
     # Print results
     _print_results(metrics, fair_metrics, sensitive_cols)
