@@ -4,6 +4,19 @@ All notable changes to EquiML are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] — 1.1.0-dev
+
+### Added
+- **Fairness policy-as-code.** New `fairness.yaml` schema (RFC 0001),
+  `equiml/policy.py` evaluator, `--policy` flag on `equiml audit`, and a
+  new `equiml verify <audit.json> --policy <fairness.yaml>` subcommand
+  for re-checking historical artefacts without retraining.
+- Documented exit codes: `0` success, `2` data error, `3` policy gate
+  breached, `4` policy schema error.
+- `examples/fairness.yaml` sample policy for the Adult-census demo.
+- `pyyaml` runtime dependency.
+- `docs/rfcs/0001-policy-as-code.md` design doc.
+
 ## [Unreleased] — 1.0.1
 
 ### Fixed
@@ -60,9 +73,6 @@ ranked by how often they were raised across nine reviewer lenses.
 - **1.1.0** — intersectional fairness analysis (audit at the
   cross-product of two protected attributes).
 - **1.1.x** candidates (raised by 3+ reviewer lenses):
-  - `--fail-on demographic_parity>0.1` style threshold gate so the
-    audit becomes a CI assertion, not just a reporter. Documented exit
-    codes (0 success, 2 data error, 3 gate breached, 4 schema mismatch).
   - `--offline` mode that refuses any network call and a bundled small
     sample CSV so the Quickstart is runnable without egress.
   - Dataset SHA-256, model SHA-256, and `git_sha` in the `_meta` block

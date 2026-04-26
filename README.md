@@ -96,7 +96,36 @@ equiml audit data.csv --target income --sensitive gender --output metrics.json
 
 # Use a different algorithm
 equiml audit data.csv --target income --sensitive gender --algorithm random_forest
+
+# Gate on a fairness policy (CI mode); exit 3 if gates fail, 4 if YAML is malformed
+equiml audit data.csv --target income --sensitive gender race --policy fairness.yaml
+
+# Re-check a saved audit JSON against a (possibly newer) policy
+equiml verify metrics.json --policy fairness.yaml
 ```
+
+### Fairness policy-as-code
+
+Declare your team's fairness contract in a `fairness.yaml` and have it enforced
+in CI, in vendor review, and in compliance evidence with the same code. See
+`examples/fairness.yaml` for a worked example and `docs/rfcs/0001-policy-as-code.md`
+for the schema.
+
+```yaml
+version: 1
+target: income
+sensitive: [gender, race]
+gates:
+  demographic_parity_difference: { max: 0.10, severity: error }
+  equalized_odds_difference: { max: 0.30, severity: warning }
+  per_sensitive:
+    gender: { demographic_parity_difference: { max: 0.05 } }
+metadata:
+  reviewer: "model-risk@example.com"
+  next_review: "2026-07-01"
+```
+
+Exit codes: `0` pass · `2` data error · `3` gate breached · `4` schema error.
 
 ### Python API
 

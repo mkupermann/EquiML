@@ -19,8 +19,20 @@ from .data import Data
 from .model import Model
 from .evaluation import EquiMLEvaluation
 from .reporting import generate_html_report
+from .policy import (
+    PolicyError,
+    evaluate_policy,
+    format_result,
+    load_policy,
+)
 
 logger = logging.getLogger(__name__)
+
+# Documented exit codes (see docs/rfcs/0001-policy-as-code.md)
+EXIT_SUCCESS = 0
+EXIT_DATA_ERROR = 2
+EXIT_POLICY_GATE_BREACHED = 3
+EXIT_POLICY_SCHEMA_ERROR = 4
 
 
 def _load_dataset(path: str) -> pd.DataFrame:
@@ -37,18 +49,28 @@ def _load_dataset(path: str) -> pd.DataFrame:
         raise ValueError(f"Unsupported format: {path}. Use CSV, JSON, Excel, or Parquet.")
 
 
-def cmd_audit(args: argparse.Namespace) -> None:
-    """Run a fairness audit on a dataset."""
+def cmd_audit(args: argparse.Namespace) -> int:
+    """Run a fairness audit on a dataset. Returns CLI exit code."""
     dataset_path = args.dataset
     target = args.target
     sensitive_cols = args.sensitive
     algorithm = args.algorithm
     output_json = args.output
     output_html = args.report
+    policy_path = getattr(args, "policy", None)
+
+    # Load policy first so a malformed policy fails fast (before training).
+    policy = None
+    if policy_path:
+        try:
+            policy = load_policy(policy_path)
+        except PolicyError as e:
+            print(f"Policy schema error: {e}", file=sys.stderr)
+            return EXIT_POLICY_SCHEMA_ERROR
 
     if not os.path.exists(dataset_path):
         print(f"Error: file '{dataset_path}' not found.")
-        sys.exit(1)
+        return EXIT_DATA_ERROR
 
     print(f"Loading {dataset_path}...")
     df = _load_dataset(dataset_path)
@@ -59,7 +81,7 @@ def cmd_audit(args: argparse.Namespace) -> None:
     if missing:
         print(f"Error: columns not found in dataset: {missing}")
         print(f"Available columns: {list(df.columns)}")
-        sys.exit(1)
+        return EXIT_DATA_ERROR
 
     # Identify feature types (exclude target, but keep sensitive for encoding)
     numerical = df.select_dtypes(include=["number"]).columns.tolist()
@@ -189,6 +211,18 @@ def cmd_audit(args: argparse.Namespace) -> None:
         )
         print(f"HTML report saved to {output_html}")
 
+    # Policy evaluation (fairness.yaml)
+    if policy is not None:
+        # Evaluate the policy against the FAIR model's metrics — the
+        # policy gates the deployable model, not the unconstrained baseline.
+        result = evaluate_policy(fair_metrics, policy)
+        print()
+        print(format_result(result, policy_path=policy_path))
+        if not result.passed:
+            return EXIT_POLICY_GATE_BREACHED
+
+    return EXIT_SUCCESS
+
 
 def _print_results(metrics: dict, fair_metrics: dict, sensitive_cols: list) -> None:
     """Print audit results to console."""
@@ -242,6 +276,44 @@ def _make_serializable(obj):
     return obj
 
 
+def cmd_verify(args: argparse.Namespace) -> int:
+    """Verify a previously-saved audit JSON against a policy file."""
+    audit_path = args.audit_json
+    policy_path = args.policy
+
+    if not os.path.exists(audit_path):
+        print(f"Error: audit JSON file '{audit_path}' not found.", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    try:
+        policy = load_policy(policy_path)
+    except PolicyError as e:
+        print(f"Policy schema error: {e}", file=sys.stderr)
+        return EXIT_POLICY_SCHEMA_ERROR
+
+    try:
+        with open(audit_path) as f:
+            payload = json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"Audit JSON is malformed: {e}", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    # The audit JSON is shaped as {"baseline": ..., "fair": ..., "_meta": ...}.
+    # Policy gates apply to the deployable (fair) model.
+    fair_metrics = payload.get("fair")
+    if not isinstance(fair_metrics, dict):
+        print(
+            "Audit JSON has no 'fair' block; was this produced by `equiml audit`?",
+            file=sys.stderr,
+        )
+        return EXIT_DATA_ERROR
+
+    result = evaluate_policy(fair_metrics, policy)
+    print(format_result(result, policy_path=policy_path))
+
+    return EXIT_SUCCESS if result.passed else EXIT_POLICY_GATE_BREACHED
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="equiml",
@@ -259,22 +331,41 @@ def main():
                             help="ML algorithm (default: logistic_regression)")
     audit_parser.add_argument("--output", "-o", help="Save detailed results as JSON")
     audit_parser.add_argument("--report", "-r", help="Generate HTML report")
+    audit_parser.add_argument(
+        "--policy", "-p",
+        help="Path to fairness.yaml policy file. Audit fails (exit 3) on gate breach; exit 4 on schema error.",
+    )
     audit_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+
+    # verify command
+    verify_parser = subparsers.add_parser(
+        "verify",
+        help="Verify a previously-saved audit JSON against a fairness.yaml policy",
+    )
+    verify_parser.add_argument("audit_json", help="Path to audit JSON produced by `equiml audit --output ...`")
+    verify_parser.add_argument(
+        "--policy", "-p", required=True,
+        help="Path to fairness.yaml policy file",
+    )
+    verify_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
     if args.command is None:
         parser.print_help()
-        sys.exit(0)
+        sys.exit(EXIT_SUCCESS)
+
+    import warnings
+    if getattr(args, "verbose", False):
+        logging.basicConfig(level=logging.INFO)
+    else:
+        logging.basicConfig(level=logging.ERROR)
+        warnings.filterwarnings("ignore")
 
     if args.command == "audit":
-        import warnings
-        if args.verbose:
-            logging.basicConfig(level=logging.INFO)
-        else:
-            logging.basicConfig(level=logging.ERROR)
-            warnings.filterwarnings("ignore")
-        cmd_audit(args)
+        sys.exit(cmd_audit(args))
+    elif args.command == "verify":
+        sys.exit(cmd_verify(args))
 
 
 if __name__ == "__main__":
