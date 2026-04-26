@@ -11,6 +11,8 @@ import json
 import sys
 import os
 import logging
+from datetime import timedelta
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
@@ -26,14 +28,20 @@ from .policy import (
     load_policy,
 )
 from .card import CardConfig, build_card_from_audit, load_card_config
+from .drift import (
+    FairnessDriftMonitor,
+    PSI_NO_DRIFT,
+    render_drift_report,
+)
 
 logger = logging.getLogger(__name__)
 
-# Documented exit codes (see docs/rfcs/0001-policy-as-code.md)
+# Documented exit codes (see docs/rfcs/0001-policy-as-code.md, 0003-fairness-drift-monitoring.md)
 EXIT_SUCCESS = 0
 EXIT_DATA_ERROR = 2
 EXIT_POLICY_GATE_BREACHED = 3
 EXIT_POLICY_SCHEMA_ERROR = 4
+EXIT_DRIFT_BREACHED = 5
 
 
 def _load_dataset(path: str) -> pd.DataFrame:
@@ -277,6 +285,184 @@ def _make_serializable(obj):
     return obj
 
 
+def _parse_metadata_pairs(items: list[str] | None) -> dict:
+    out: dict = {}
+    for item in items or []:
+        if "=" not in item:
+            raise ValueError(f"--metadata expects KEY=VALUE, got: {item!r}")
+        k, v = item.split("=", 1)
+        out[k] = v
+    return out
+
+
+def cmd_monitor_record(args: argparse.Namespace) -> int:
+    """Append one batch (from a CSV) to a monitor's JSONL state."""
+    state_path = args.state
+    batch_path = args.batch
+    predictions_col = args.predictions_col
+    sensitive = args.sensitive
+    labels_col = getattr(args, "labels_col", None)
+    metadata_pairs = getattr(args, "metadata", None) or []
+
+    if not os.path.exists(batch_path):
+        print(f"Error: batch file '{batch_path}' not found.", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    try:
+        df = pd.read_csv(batch_path)
+    except Exception as e:
+        print(f"Could not read batch CSV: {e}", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    sensitive_cols = [s.strip() for s in sensitive.split(",") if s.strip()]
+    missing = [c for c in [predictions_col] + sensitive_cols if c not in df.columns]
+    if labels_col and labels_col not in df.columns:
+        missing.append(labels_col)
+    if missing:
+        print(f"Error: columns not found in batch CSV: {missing}", file=sys.stderr)
+        print(f"Available columns: {list(df.columns)}", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    try:
+        metadata = _parse_metadata_pairs(metadata_pairs)
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    monitor = FairnessDriftMonitor(
+        sensitive_features=sensitive_cols,
+        state_path=state_path,
+    )
+    batch = monitor.record(
+        predictions=df[predictions_col].to_numpy(),
+        sensitive_features=df[sensitive_cols],
+        true_labels=df[labels_col].to_numpy() if labels_col else None,
+        metadata=metadata,
+    )
+    print(f"Recorded batch at {batch.timestamp.isoformat()} ({batch.n_samples} samples) → {state_path}")
+    return EXIT_SUCCESS
+
+
+def cmd_monitor_check(args: argparse.Namespace) -> int:
+    """Evaluate the latest window against a baseline (drift) and an optional policy."""
+    state_path = args.state
+    baseline_days = args.baseline_days
+    current_days = args.current_days
+    psi_threshold = args.psi_threshold
+    policy_path = getattr(args, "policy", None)
+    sensitive = args.sensitive
+
+    if not os.path.exists(state_path):
+        print(f"Error: state file '{state_path}' not found.", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    sensitive_cols = [s.strip() for s in sensitive.split(",") if s.strip()]
+    monitor = FairnessDriftMonitor(
+        sensitive_features=sensitive_cols,
+        state_path=state_path,
+    )
+
+    if not monitor.batches:
+        print("Error: monitor state contains no batches.", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    latest = max(b.timestamp for b in monitor.batches)
+    baseline_end = latest - timedelta(days=current_days)
+    current_window = monitor.window(days=current_days)
+    baseline_window = monitor.window(days=baseline_days, until=baseline_end)
+
+    drift = monitor.detect_drift(
+        current_window=current_window,
+        baseline_window=baseline_window,
+    )
+
+    print("DRIFT RESULT")
+    print(f"  Severity: {drift.severity.upper()}")
+    print(f"  PSI overall: {drift.psi_overall:.4f}  (threshold {psi_threshold:.4f})")
+    for sf, psi in drift.psi_per_feature.items():
+        print(f"    {sf}: {psi:.4f}")
+    print(f"  Baseline: {drift.baseline_n} samples · Current: {drift.current_n} samples")
+    for note in drift.notes:
+        print(f"  Note: {note}")
+
+    drift_breached = drift.psi_overall >= psi_threshold
+
+    policy_breached = False
+    if policy_path:
+        try:
+            policy = load_policy(policy_path)
+        except PolicyError as e:
+            print(f"Policy schema error: {e}", file=sys.stderr)
+            return EXIT_POLICY_SCHEMA_ERROR
+        result = monitor.evaluate_against_policy(policy, window=current_window)
+        print()
+        print(format_result(result, policy_path=policy_path))
+        if not result.passed:
+            policy_breached = True
+
+    if policy_breached:
+        return EXIT_POLICY_GATE_BREACHED
+    if drift_breached:
+        return EXIT_DRIFT_BREACHED
+    return EXIT_SUCCESS
+
+
+def cmd_monitor_report(args: argparse.Namespace) -> int:
+    """Render a markdown drift report from the monitor state."""
+    state_path = args.state
+    baseline_days = args.baseline_days
+    current_days = args.current_days
+    output_path = args.output
+    policy_path = getattr(args, "policy", None)
+    sensitive = args.sensitive
+
+    if not os.path.exists(state_path):
+        print(f"Error: state file '{state_path}' not found.", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    sensitive_cols = [s.strip() for s in sensitive.split(",") if s.strip()]
+    monitor = FairnessDriftMonitor(
+        sensitive_features=sensitive_cols,
+        state_path=state_path,
+    )
+    if not monitor.batches:
+        print("Error: monitor state contains no batches.", file=sys.stderr)
+        return EXIT_DATA_ERROR
+
+    latest = max(b.timestamp for b in monitor.batches)
+    baseline_end = latest - timedelta(days=current_days)
+    current_window = monitor.window(days=current_days)
+    baseline_window = monitor.window(days=baseline_days, until=baseline_end)
+    drift = monitor.detect_drift(
+        current_window=current_window,
+        baseline_window=baseline_window,
+    )
+
+    policy_result = None
+    if policy_path:
+        try:
+            policy = load_policy(policy_path)
+        except PolicyError as e:
+            print(f"Policy schema error: {e}", file=sys.stderr)
+            return EXIT_POLICY_SCHEMA_ERROR
+        policy_result = monitor.evaluate_against_policy(policy, window=current_window)
+
+    md = render_drift_report(
+        monitor=monitor,
+        baseline_window=baseline_window,
+        current_window=current_window,
+        drift=drift,
+        policy_result=policy_result,
+        policy_path=policy_path,
+        baseline_days=baseline_days,
+        current_days=current_days,
+    )
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(output_path).write_text(md)
+    print(f"Drift report written to {output_path}")
+    return EXIT_SUCCESS
+
+
 def cmd_card(args: argparse.Namespace) -> int:
     """Generate a model card (markdown) from an audit JSON."""
     audit_path = args.audit_json
@@ -393,6 +579,37 @@ def main():
     )
     verify_parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
 
+    # monitor command (with sub-subcommands record/check/report)
+    monitor_parser = subparsers.add_parser(
+        "monitor",
+        help="Production fairness drift monitoring (record/check/report)",
+    )
+    monitor_subs = monitor_parser.add_subparsers(dest="monitor_op", required=True)
+
+    rec = monitor_subs.add_parser("record", help="Append a batch to a monitor state file")
+    rec.add_argument("--state", required=True, help="Path to JSONL state file (will be created if missing)")
+    rec.add_argument("--batch", required=True, help="CSV with predictions + sensitive columns")
+    rec.add_argument("--predictions-col", required=True, help="Column name with the model's predictions (0/1)")
+    rec.add_argument("--sensitive", required=True, help="Comma-separated sensitive column names")
+    rec.add_argument("--labels-col", help="Column name with ground-truth labels (optional)")
+    rec.add_argument("--metadata", action="append", help="KEY=VALUE pairs to attach to the batch (repeatable)")
+
+    chk = monitor_subs.add_parser("check", help="Evaluate latest window for drift and policy compliance")
+    chk.add_argument("--state", required=True, help="Path to JSONL state file")
+    chk.add_argument("--sensitive", required=True, help="Comma-separated sensitive column names")
+    chk.add_argument("--baseline-days", type=int, default=30)
+    chk.add_argument("--current-days", type=int, default=7)
+    chk.add_argument("--psi-threshold", type=float, default=PSI_NO_DRIFT)
+    chk.add_argument("--policy", help="Optional fairness.yaml to enforce on the current window")
+
+    rep = monitor_subs.add_parser("report", help="Render a markdown drift report")
+    rep.add_argument("--state", required=True, help="Path to JSONL state file")
+    rep.add_argument("--sensitive", required=True, help="Comma-separated sensitive column names")
+    rep.add_argument("--output", required=True, help="Path to write the markdown report")
+    rep.add_argument("--baseline-days", type=int, default=30)
+    rep.add_argument("--current-days", type=int, default=7)
+    rep.add_argument("--policy", help="Optional fairness.yaml to embed in the report")
+
     # card command
     card_parser = subparsers.add_parser(
         "card",
@@ -433,6 +650,13 @@ def main():
         sys.exit(cmd_verify(args))
     elif args.command == "card":
         sys.exit(cmd_card(args))
+    elif args.command == "monitor":
+        if args.monitor_op == "record":
+            sys.exit(cmd_monitor_record(args))
+        elif args.monitor_op == "check":
+            sys.exit(cmd_monitor_check(args))
+        elif args.monitor_op == "report":
+            sys.exit(cmd_monitor_report(args))
 
 
 if __name__ == "__main__":
